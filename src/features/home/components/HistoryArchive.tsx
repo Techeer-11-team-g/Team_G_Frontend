@@ -1,36 +1,36 @@
-import type { HistoryItem } from '@/types/api';
+import type { LocalHistoryItem } from '@/types/local';
 
 interface HistoryArchiveProps {
-  history: HistoryItem[];
-  onSelectItem: (item: HistoryItem) => void;
+  history: LocalHistoryItem[];
+  onSelectItem: (item: LocalHistoryItem) => void;
 }
 
 export function HistoryArchive({ history, onSelectItem }: HistoryArchiveProps) {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center border-b border-black/5 pb-4">
-        <h4 className="text-[11px] uppercase tracking-[0.4em] font-black text-black/20">
+      <div className="flex items-center justify-between border-b border-black/5 pb-4">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-black/20">
           Archive History
         </h4>
-        <span className="text-[10px] font-mono opacity-20">[{history.length}/05]</span>
+        <span className="font-mono text-[10px] opacity-20">[{history.length}/5]</span>
       </div>
-      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-6">
+      <div className="no-scrollbar flex gap-4 overflow-x-auto pb-6">
         {history.map((item) => (
           <div
             key={item.id}
             onClick={() => onSelectItem(item)}
-            className="w-24 h-32 flex-shrink-0 bg-white rounded-2xl overflow-hidden shadow-lg border border-white active:scale-95 transition-all cursor-pointer group"
+            className="group h-32 w-24 flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white bg-white shadow-lg transition-all active:scale-95"
           >
             <img
               src={item.image}
               alt="히스토리"
-              className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+              className="h-full w-full object-cover opacity-40 grayscale transition-all duration-700 group-hover:opacity-100 group-hover:grayscale-0"
             />
           </div>
         ))}
         {history.length === 0 && (
-          <div className="w-full py-12 border border-dashed border-black/10 rounded-2xl flex items-center justify-center">
-            <p className="text-[10px] uppercase font-black opacity-10 tracking-widest">
+          <div className="flex w-full items-center justify-center rounded-2xl border border-dashed border-black/10 py-12">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-10">
               분석 기록이 없습니다
             </p>
           </div>

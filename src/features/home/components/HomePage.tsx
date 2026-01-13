@@ -29,12 +29,10 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
   const {
     inputMode,
     urlInput,
-    showPasteTooltip,
     fileInputRef,
     setInputMode,
     setUrlInput,
     handleFileChange,
-    handlePaste,
     handleUrlSubmit,
     triggerFileInput,
   } = useImageInput({
@@ -62,11 +60,9 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
             <ImageInputZone
               inputMode={inputMode}
               urlInput={urlInput}
-              showPasteTooltip={showPasteTooltip}
               onInputModeChange={setInputMode}
               onUrlInputChange={setUrlInput}
               onFileClick={triggerFileInput}
-              onPasteClick={handlePaste}
               onUrlSubmit={handleUrlSubmit}
             />
 
