@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useAnalysisMutation, useAnalysisStatus, useAnalysisResult } from '@/features/analysis';
 import { uploadedImagesApi } from '@/api';
 import type { LocalHistoryItem, LocalAnalysisResult } from '@/types/local';
@@ -98,6 +99,11 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
 
       setLocalResult(result);
 
+      // 분석 완료 토스트
+      toast.success(`${convertedItems.length}개 아이템을 찾았습니다`, {
+        description: '상품을 탭하여 자세히 확인하세요',
+      });
+
       // Save to history
       const newItem: LocalHistoryItem = {
         id: Date.now().toString(),
@@ -116,9 +122,13 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
   useEffect(() => {
     if (analysisMutation.isError) {
       setError('분석에 실패했습니다. 다시 시도해주세요.');
+      toast.error('분석에 실패했습니다', {
+        description: '다시 시도해주세요',
+      });
     }
     if (statusData?.status === 'ERROR') {
       setError('분석 처리 중 오류가 발생했습니다.');
+      toast.error('분석 처리 중 오류가 발생했습니다');
     }
   }, [analysisMutation.isError, statusData?.status]);
 

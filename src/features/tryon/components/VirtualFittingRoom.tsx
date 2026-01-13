@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useTryOnMutation, useTryOnStatus, useTryOnResult } from '../hooks/useTryOn';
 import { FittingHeader } from './FittingHeader';
 import { FittingPreview } from './FittingPreview';
@@ -50,8 +51,18 @@ export function VirtualFittingRoom({
   useEffect(() => {
     if (fittingResult) {
       setViewMode('after');
+      toast.success('가상 피팅이 완료되었습니다', {
+        description: '결과를 확인해보세요',
+      });
     }
   }, [fittingResult]);
+
+  // 에러 처리
+  useEffect(() => {
+    if (statusData?.fitting_image_status === 'ERROR') {
+      toast.error('피팅 처리 중 오류가 발생했습니다');
+    }
+  }, [statusData?.fitting_image_status]);
 
   const handleStartFitting = async () => {
     if (!userPhoto) return;
