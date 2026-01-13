@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Calendar, Lock, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FormInput, LoadingButton, ProgressIndicator } from '@/components/ui';
 
 export function OnboardingStep2() {
   const navigate = useNavigate();
@@ -78,14 +78,9 @@ export function OnboardingStep2() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="w-full px-6 py-6">
         <div className="max-w-md mx-auto">
-          {/* Progress Indicator */}
-          <div className="flex items-center gap-2 mb-6">
-            <div className="flex-1 h-1 rounded-full bg-black" />
-            <div className="flex-1 h-1 rounded-full bg-black" />
-          </div>
+          <ProgressIndicator currentStep={2} totalSteps={2} className="mb-6" />
           <h2 className="text-[11px] uppercase tracking-[0.4em] font-black text-black/40">
             Step 2 of 2
           </h2>
@@ -150,68 +145,48 @@ export function OnboardingStep2() {
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Card Number */}
-            <div className="relative">
-              <CreditCard
-                size={18}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30"
-              />
-              <input
+            <FormInput
+              type="text"
+              placeholder="카드번호"
+              value={cardNumber}
+              onChange={handleCardNumberChange}
+              icon={<CreditCard size={18} />}
+              className="font-mono tracking-wider"
+              inputMode="numeric"
+            />
+
+            <FormInput
+              type="text"
+              placeholder="카드 소유자 이름"
+              value={cardHolder}
+              onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+              className="uppercase tracking-wider"
+            />
+
+            <div className="flex gap-4">
+              <FormInput
                 type="text"
-                placeholder="카드번호"
-                value={cardNumber}
-                onChange={handleCardNumberChange}
-                className="w-full bg-white border border-black/10 pl-14 pr-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all font-mono tracking-wider"
+                placeholder="MM/YY"
+                value={expiryDate}
+                onChange={handleExpiryChange}
+                icon={<Calendar size={18} />}
+                wrapperClassName="flex-1"
+                className="font-mono"
+                inputMode="numeric"
+              />
+              <FormInput
+                type="text"
+                placeholder="CVC"
+                value={cvc}
+                onChange={handleCvcChange}
+                icon={<Lock size={18} />}
+                wrapperClassName="flex-1"
+                className="font-mono"
                 inputMode="numeric"
               />
             </div>
 
-            {/* Card Holder */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="카드 소유자 이름"
-                value={cardHolder}
-                onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                className="w-full bg-white border border-black/10 px-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all uppercase tracking-wider"
-              />
-            </div>
-
-            {/* Expiry & CVC */}
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Calendar
-                  size={18}
-                  className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30"
-                />
-                <input
-                  type="text"
-                  placeholder="MM/YY"
-                  value={expiryDate}
-                  onChange={handleExpiryChange}
-                  className="w-full bg-white border border-black/10 pl-14 pr-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all font-mono"
-                  inputMode="numeric"
-                />
-              </div>
-              <div className="relative flex-1">
-                <Lock
-                  size={18}
-                  className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30"
-                />
-                <input
-                  type="text"
-                  placeholder="CVC"
-                  value={cvc}
-                  onChange={handleCvcChange}
-                  className="w-full bg-white border border-black/10 pl-14 pr-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all font-mono"
-                  inputMode="numeric"
-                />
-              </div>
-            </div>
-
-            {/* Security Notice */}
             <div className="flex items-center gap-3 py-3 px-4 bg-black/[0.03] rounded-2xl">
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
                 <Check size={14} className="text-green-600" />
@@ -221,19 +196,15 @@ export function OnboardingStep2() {
               </p>
             </div>
 
-            {/* Submit Button */}
             <div className="pt-4">
-              <Button
+              <LoadingButton
                 type="submit"
                 className="w-full"
-                disabled={!isFormValid || isLoading}
+                isLoading={isLoading}
+                disabled={!isFormValid}
               >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  '완료'
-                )}
-              </Button>
+                완료
+              </LoadingButton>
             </div>
           </form>
 

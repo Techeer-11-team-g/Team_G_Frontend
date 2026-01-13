@@ -9,3 +9,7 @@ export { BackToTopButton } from './back-to-top-button';
 export { EmptyState } from './empty-state';
 export { ProductCard } from './product-card';
 export { IconButton } from './icon-button';
+export { FormInput } from './form-input';
+export { LoadingButton } from './loading-button';
+export { ProgressIndicator } from './progress-indicator';
+export { AnimatedBackground } from './animated-background';
