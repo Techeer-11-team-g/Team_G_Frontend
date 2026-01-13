@@ -36,16 +36,16 @@ export function CartPage() {
   return (
     <div className="min-h-screen bg-background pb-32">
       {/* Header */}
-      <header className="sticky top-0 w-full px-6 py-6 z-sticky bg-background/90 backdrop-blur-xl border-b border-black/5">
-        <div className="max-w-md mx-auto flex items-center justify-between">
+      <header className="bg-background/90 sticky top-0 z-sticky w-full border-b border-black/5 px-6 py-6 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-center justify-between">
           <div>
-            <h2 className="text-[11px] uppercase tracking-[0.4em] font-black">장바구니</h2>
-            <p className="text-[9px] text-black/40 mt-1">{items.length}개 상품</p>
+            <h2 className="text-[11px] font-black uppercase tracking-[0.4em]">장바구니</h2>
+            <p className="mt-1 text-[9px] text-black/40">{items.length}개 상품</p>
           </div>
           {items.length > 0 && (
             <button
               onClick={clearCart}
-              className="text-[10px] font-black uppercase text-black/40 hover:text-black transition-colors"
+              className="text-[10px] font-black uppercase text-black/40 transition-colors hover:text-black"
             >
               전체 삭제
             </button>
@@ -53,14 +53,14 @@ export function CartPage() {
         </div>
       </header>
 
-      <main className="max-w-md mx-auto px-6 py-8">
+      <main className="mx-auto max-w-md px-6 py-8">
         {items.length === 0 ? (
           <EmptyState
             icon={<ShoppingBag size={48} strokeWidth={1} />}
             title="장바구니가 비어있습니다"
             description="마음에 드는 상품을 담아보세요"
             action={
-              <Button variant="outline" onClick={() => navigate('/')}>
+              <Button variant="outline" onClick={() => navigate('/home')}>
                 쇼핑하러 가기
               </Button>
             }
@@ -72,25 +72,21 @@ export function CartPage() {
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-3xl border border-black/5 p-4 flex gap-4 animate-in fade-in slide-in-from-bottom-2"
+                  className="animate-in fade-in slide-in-from-bottom-2 flex gap-4 rounded-3xl border border-black/5 bg-white p-4"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Product Image */}
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-black/5 flex-shrink-0">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-black/5">
+                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex-1 flex flex-col justify-between py-1">
+                  <div className="flex flex-1 flex-col justify-between py-1">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-black/40 font-medium">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-black/40">
                         {item.brand}
                       </p>
-                      <h4 className="text-[13px] font-bold mt-1 line-clamp-2">{item.name}</h4>
+                      <h4 className="mt-1 line-clamp-2 text-[13px] font-bold">{item.name}</h4>
                     </div>
                     <p className="text-[14px] font-black">{item.price}</p>
                   </div>
@@ -98,7 +94,7 @@ export function CartPage() {
                   {/* Remove Button */}
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-black/30 hover:bg-black hover:text-white transition-all self-start"
+                    className="flex h-8 w-8 items-center justify-center self-start rounded-full bg-black/5 text-black/30 transition-all hover:bg-black hover:text-white"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -107,8 +103,8 @@ export function CartPage() {
             </div>
 
             {/* Order Summary */}
-            <div className="bg-white rounded-4xl border border-black/5 p-6 space-y-4">
-              <h4 className="text-[10px] uppercase font-black tracking-widest text-black/20">
+            <div className="space-y-4 rounded-4xl border border-black/5 bg-white p-6">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/20">
                 주문 요약
               </h4>
               <div className="space-y-3">
@@ -120,7 +116,7 @@ export function CartPage() {
                   <span className="text-black/50">배송비</span>
                   <span className="font-bold text-accent">무료</span>
                 </div>
-                <div className="border-t border-black/5 pt-3 flex justify-between">
+                <div className="flex justify-between border-t border-black/5 pt-3">
                   <span className="text-[13px] font-bold">총 결제금액</span>
                   <span className="text-[16px] font-black">{formatPrice(calculateTotal())}</span>
                 </div>
@@ -132,13 +128,9 @@ export function CartPage() {
 
       {/* Checkout Button - Fixed at bottom */}
       {items.length > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 p-6 bg-gradient-to-t from-background via-background to-transparent">
-          <div className="max-w-md mx-auto">
-            <Button
-              className="w-full h-14"
-              onClick={handleCheckout}
-              disabled={isProcessing}
-            >
+        <div className="fixed bottom-20 left-0 right-0 bg-gradient-to-t from-background via-background to-transparent p-6">
+          <div className="mx-auto max-w-md">
+            <Button className="h-14 w-full" onClick={handleCheckout} disabled={isProcessing}>
               {isProcessing ? '처리 중...' : `${formatPrice(calculateTotal())} 결제하기`}
             </Button>
           </div>
