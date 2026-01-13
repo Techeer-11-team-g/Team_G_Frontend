@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Check, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FormInput, LoadingButton, AnimatedBackground } from '@/components/ui';
+import { useFieldFocus } from '@/hooks';
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -9,13 +10,11 @@ export function SignUpPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { isFocused, getFieldProps } = useFieldFocus<'email' | 'password'>();
 
-  // 이메일 유효성 검사
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // 비밀번호 강도 계산
   const getPasswordStrength = () => {
     if (!password) return { level: 0, label: '', color: '' };
     let strength = 0;
@@ -77,14 +76,7 @@ export function SignUpPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
-      {/* Animated Background Blobs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-40 -top-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-br from-purple-200/30 to-pink-200/30 blur-3xl" />
-        <div
-          className="absolute -bottom-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-br from-blue-200/20 to-cyan-200/20 blur-3xl"
-          style={{ animationDelay: '1s' }}
-        />
-      </div>
+      <AnimatedBackground />
 
       {/* Header */}
       <header className="relative flex w-full items-center justify-center px-6 py-8">
@@ -110,91 +102,46 @@ export function SignUpPage() {
             onSubmit={handleSubmit}
             className="animate-in fade-in slide-in-from-bottom-5 space-y-5 delay-150 duration-700"
           >
-            {/* Email Input */}
-            <div className="space-y-2">
-              <div
-                className={`relative transition-all duration-300 ${
-                  focusedField === 'email' ? 'scale-[1.02]' : ''
-                }`}
-              >
-                <Mail
-                  size={18}
-                  className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${
-                    focusedField === 'email' ? 'text-black' : 'text-black/30'
-                  }`}
-                />
-                <input
-                  type="email"
-                  placeholder="이메일"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  className={`w-full rounded-2xl border-2 bg-white py-4 pl-14 pr-12 text-[14px] outline-none transition-all duration-300 ${
-                    focusedField === 'email'
-                      ? 'border-black shadow-lg shadow-black/5'
-                      : email && isEmailValid
-                        ? 'border-green-400'
-                        : email && !isEmailValid
-                          ? 'border-red-300'
-                          : 'border-black/10'
-                  }`}
-                />
-                {email && (
-                  <div
-                    className={`absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 ${
-                      isEmailValid ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
-                    }`}
-                  >
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
-                      <Check size={14} className="text-white" strokeWidth={3} />
-                    </div>
+            <FormInput
+              type="email"
+              placeholder="이메일"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              icon={<Mail size={18} />}
+              isFocused={isFocused('email')}
+              isValid={email ? isEmailValid : undefined}
+              isInvalid={email ? !isEmailValid : undefined}
+              error={email && !isEmailValid ? '올바른 이메일 형식을 입력해주세요' : undefined}
+              rightIcon={
+                email && isEmailValid ? (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
+                    <Check size={14} className="text-white" strokeWidth={3} />
                   </div>
-                )}
-              </div>
-              {email && !isEmailValid && (
-                <p className="animate-in fade-in slide-in-from-top-1 pl-2 text-[11px] text-red-400 duration-200">
-                  올바른 이메일 형식을 입력해주세요
-                </p>
-              )}
-            </div>
+                ) : undefined
+              }
+              {...getFieldProps('email')}
+            />
 
-            {/* Password Input */}
             <div className="space-y-3">
-              <div
-                className={`relative transition-all duration-300 ${
-                  focusedField === 'password' ? 'scale-[1.02]' : ''
-                }`}
-              >
-                <Lock
-                  size={18}
-                  className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${
-                    focusedField === 'password' ? 'text-black' : 'text-black/30'
-                  }`}
-                />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="비밀번호"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                  className={`w-full rounded-2xl border-2 bg-white py-4 pl-14 pr-14 text-[14px] outline-none transition-all duration-300 ${
-                    focusedField === 'password'
-                      ? 'border-black shadow-lg shadow-black/5'
-                      : 'border-black/10'
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-black/30 transition-all duration-200 hover:scale-110 hover:text-black/60 active:scale-95"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <FormInput
+                type={showPassword ? 'text' : 'password'}
+                placeholder="비밀번호"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                icon={<Lock size={18} />}
+                isFocused={isFocused('password')}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-black/30 transition-all duration-200 hover:scale-110 hover:text-black/60 active:scale-95"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                }
+                {...getFieldProps('password')}
+              />
 
-              {/* Password Strength Indicator */}
               {password && (
                 <div className="animate-in fade-in slide-in-from-top-2 px-2 duration-300">
                   <div className="flex items-center gap-3">
@@ -207,9 +154,7 @@ export function SignUpPage() {
                               ? passwordStrength.color
                               : 'bg-transparent'
                           }`}
-                          style={{
-                            transitionDelay: `${level * 50}ms`,
-                          }}
+                          style={{ transitionDelay: `${level * 50}ms` }}
                         />
                       ))}
                     </div>
@@ -231,26 +176,16 @@ export function SignUpPage() {
               )}
             </div>
 
-            {/* Submit Button */}
             <div className="pt-2">
-              <Button
+              <LoadingButton
                 type="submit"
-                className={`w-full transition-all duration-300 ${
-                  isFormValid
-                    ? 'hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20'
-                    : 'opacity-50'
-                }`}
-                disabled={!isFormValid || isLoading}
+                className="w-full"
+                isLoading={isLoading}
+                loadingText="잠시만요..."
+                disabled={!isFormValid}
               >
-                {isLoading ? (
-                  <div className="flex items-center gap-3">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    <span>잠시만요...</span>
-                  </div>
-                ) : (
-                  '시작하기'
-                )}
-              </Button>
+                시작하기
+              </LoadingButton>
             </div>
           </form>
 

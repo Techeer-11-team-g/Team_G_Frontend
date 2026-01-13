@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, User, MapPin, Phone, Upload, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FormInput, LoadingButton, ProgressIndicator } from '@/components/ui';
 
 export function OnboardingStep1() {
   const navigate = useNavigate();
@@ -47,14 +47,9 @@ export function OnboardingStep1() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="w-full px-6 py-6">
         <div className="max-w-md mx-auto">
-          {/* Progress Indicator */}
-          <div className="flex items-center gap-2 mb-6">
-            <div className="flex-1 h-1 rounded-full bg-black" />
-            <div className="flex-1 h-1 rounded-full bg-black/10" />
-          </div>
+          <ProgressIndicator currentStep={1} totalSteps={2} className="mb-6" />
           <h2 className="text-[11px] uppercase tracking-[0.4em] font-black text-black/40">
             Step 1 of 2
           </h2>
@@ -131,67 +126,41 @@ export function OnboardingStep1() {
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name Input */}
-            <div className="relative">
-              <User
-                size={18}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30"
-              />
-              <input
-                type="text"
-                placeholder="이름 *"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-white border border-black/10 pl-14 pr-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all"
-                required
-              />
-            </div>
+            <FormInput
+              type="text"
+              placeholder="이름 *"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              icon={<User size={18} />}
+              required
+            />
 
-            {/* Address Input */}
-            <div className="relative">
-              <MapPin
-                size={18}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30"
-              />
-              <input
-                type="text"
-                placeholder="주소"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full bg-white border border-black/10 pl-14 pr-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all"
-              />
-            </div>
+            <FormInput
+              type="text"
+              placeholder="주소"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              icon={<MapPin size={18} />}
+            />
 
-            {/* Phone Input */}
-            <div className="relative">
-              <Phone
-                size={18}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-black/30"
-              />
-              <input
-                type="tel"
-                placeholder="전화번호"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-white border border-black/10 pl-14 pr-5 py-4 text-[14px] rounded-2xl outline-none focus:border-black/30 transition-all"
-              />
-            </div>
+            <FormInput
+              type="tel"
+              placeholder="전화번호"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              icon={<Phone size={18} />}
+            />
 
-            {/* Submit Button */}
             <div className="pt-4">
-              <Button
+              <LoadingButton
                 type="submit"
                 className="w-full"
-                disabled={!isFormValid || isLoading}
+                isLoading={isLoading}
+                disabled={!isFormValid}
               >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  '다음'
-                )}
-              </Button>
+                다음
+              </LoadingButton>
             </div>
           </form>
 
