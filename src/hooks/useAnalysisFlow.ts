@@ -7,6 +7,8 @@ import type { AnalyzedItem } from '@/types/api';
 const HISTORY_KEY = 'whats_on_history_v4';
 const MAX_HISTORY = 5;
 
+type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR' | null;
+
 interface UseAnalysisFlowReturn {
   // State
   image: string | null;
@@ -14,6 +16,9 @@ interface UseAnalysisFlowReturn {
   analysisResult: LocalAnalysisResult | undefined;
   error: string | null;
   history: LocalHistoryItem[];
+  // 폴링 상태
+  status: AnalysisStatus;
+  progress: number;
 
   // Actions
   startAnalysis: (base64Image: string) => Promise<void>;
@@ -38,6 +43,10 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     analysisId,
     statusData?.status === 'DONE'
   );
+
+  // 현재 상태 및 진행률
+  const status: AnalysisStatus = statusData?.status ?? (analysisMutation.isPending ? 'PENDING' : null);
+  const progress = statusData?.progress ?? 0;
 
   // Loading state
   const isAnalyzing =
@@ -163,6 +172,8 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     analysisResult: localResult,
     error,
     history,
+    status,
+    progress,
     startAnalysis,
     reset,
     loadFromHistory,
