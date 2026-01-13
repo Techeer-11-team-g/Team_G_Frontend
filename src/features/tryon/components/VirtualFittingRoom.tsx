@@ -12,6 +12,7 @@ interface VirtualFittingRoomProps {
   onClose: () => void;
   onSaveUserPhoto: (photo: string) => void;
   onAddToCart: (product: ProductCandidate) => void;
+  detectedObjectId?: number;
 }
 
 export function VirtualFittingRoom({
@@ -20,21 +21,30 @@ export function VirtualFittingRoom({
   onClose,
   onSaveUserPhoto,
   onAddToCart,
+  detectedObjectId = 0,
 }: VirtualFittingRoomProps) {
   const [viewMode, setViewMode] = useState<'before' | 'after'>('after');
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [fittingImageId, setFittingImageId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // TryOn API hooks
   const tryOnMutation = useTryOnMutation();
-  const { data: statusData } = useTryOnStatus(jobId, !!jobId && tryOnMutation.isSuccess);
-  const { data: tryOnResult } = useTryOnResult(jobId, statusData?.status === 'done');
+  const { data: statusData } = useTryOnStatus(
+    fittingImageId,
+    !!fittingImageId && tryOnMutation.isSuccess
+  );
+  const { data: tryOnResult } = useTryOnResult(
+    fittingImageId,
+    statusData?.fitting_image_status === 'DONE'
+  );
 
   const isGenerating =
     tryOnMutation.isPending ||
-    (!!jobId && statusData?.status !== 'done' && statusData?.status !== 'error');
+    (!!fittingImageId &&
+      statusData?.fitting_image_status !== 'DONE' &&
+      statusData?.fitting_image_status !== 'ERROR');
 
-  const fittingResult = tryOnResult?.resultImage || null;
+  const fittingResult = tryOnResult?.fitting_image_url || null;
 
   // 피팅 완료 시 after 모드로 전환
   useEffect(() => {
@@ -45,21 +55,24 @@ export function VirtualFittingRoom({
 
   const handleStartFitting = async () => {
     if (!userPhoto) return;
-    setJobId(null);
+    setFittingImageId(null);
 
     try {
       const result = await tryOnMutation.mutateAsync({
-        userPhoto,
-        productId: product.source_url,
+        detected_object_id: detectedObjectId,
+        product_id: product.product_id || 0,
+        user_image_url: userPhoto,
       });
-      setJobId(result.jobId);
+      setFittingImageId(result.fitting_image_id);
     } catch (err) {
       console.error('Fitting request failed:', err);
     }
   };
 
   const statusMessage =
-    statusData?.status === 'processing' ? '원단을 체형에 재구성하고 있습니다' : '서버 연결 중';
+    statusData?.fitting_image_status === 'RUNNING'
+      ? '원단을 체형에 재구성하고 있습니다'
+      : '서버 연결 중';
 
   const showStartButton = !fittingResult && !!userPhoto && !isGenerating;
   const showRetryOptions = !!fittingResult;
