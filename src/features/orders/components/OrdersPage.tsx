@@ -49,21 +49,21 @@ export function OrdersPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="sticky top-0 w-full px-6 py-6 z-sticky bg-background/90 backdrop-blur-xl border-b border-black/5">
-        <div className="max-w-md mx-auto">
-          <h2 className="text-[11px] uppercase tracking-[0.4em] font-black">주문 내역</h2>
-          <p className="text-[9px] text-black/40 mt-1">{orders.length}개의 주문</p>
+      <header className="bg-background/90 sticky top-0 z-sticky w-full border-b border-black/5 px-6 py-6 backdrop-blur-xl">
+        <div className="mx-auto max-w-md">
+          <h2 className="text-[11px] font-black uppercase tracking-[0.4em]">주문 내역</h2>
+          <p className="mt-1 text-[9px] text-black/40">{orders.length}개의 주문</p>
         </div>
       </header>
 
-      <main className="max-w-md mx-auto px-6 py-8">
+      <main className="mx-auto max-w-md px-6 py-8">
         {orders.length === 0 ? (
           <EmptyState
             icon={<Package size={48} strokeWidth={1} />}
             title="주문 내역이 없습니다"
             description="첫 주문을 해보세요"
             action={
-              <Button variant="outline" onClick={() => navigate('/')}>
+              <Button variant="outline" onClick={() => navigate('/home')}>
                 쇼핑하러 가기
               </Button>
             }
@@ -73,19 +73,17 @@ export function OrdersPage() {
             {orders.map((order, index) => (
               <div
                 key={order.id}
-                className="bg-white rounded-4xl border border-black/5 overflow-hidden animate-in fade-in slide-in-from-bottom-2"
+                className="animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-4xl border border-black/5 bg-white"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {/* Order Header */}
-                <div className="px-6 py-4 border-b border-black/5 flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-black/5 px-6 py-4">
                   <div>
-                    <p className="text-[10px] text-black/40 font-medium">
-                      {order.date}
-                    </p>
-                    <p className="text-[11px] font-bold mt-1">주문번호: {order.id}</p>
+                    <p className="text-[10px] font-medium text-black/40">{order.date}</p>
+                    <p className="mt-1 text-[11px] font-bold">주문번호: {order.id}</p>
                   </div>
                   <span
-                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${statusColors[order.status]}`}
+                    className={`rounded-full px-3 py-1 text-[9px] font-black uppercase ${statusColors[order.status]}`}
                   >
                     {statusLabels[order.status]}
                   </span>
@@ -98,17 +96,17 @@ export function OrdersPage() {
                       {order.items.slice(0, 3).map((item, i) => (
                         <div
                           key={i}
-                          className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white bg-black/5"
+                          className="h-12 w-12 overflow-hidden rounded-xl border-2 border-white bg-black/5"
                         >
                           <img
                             src={item.image}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                           />
                         </div>
                       ))}
                       {order.items.length > 3 && (
-                        <div className="w-12 h-12 rounded-xl bg-black/5 border-2 border-white flex items-center justify-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-white bg-black/5">
                           <span className="text-[10px] font-black text-black/40">
                             +{order.items.length - 3}
                           </span>
@@ -116,11 +114,11 @@ export function OrdersPage() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-[12px] font-medium line-clamp-1">
+                      <p className="line-clamp-1 text-[12px] font-medium">
                         {order.items[0].name}
                         {order.items.length > 1 && ` 외 ${order.items.length - 1}건`}
                       </p>
-                      <p className="text-[14px] font-black mt-1">{order.total}</p>
+                      <p className="mt-1 text-[14px] font-black">{order.total}</p>
                     </div>
                     <ChevronRight size={18} className="text-black/20" />
                   </div>

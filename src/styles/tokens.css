@@ -30,9 +30,9 @@
   /* ─────────────────────────────────────────────
      Typography
      ───────────────────────────────────────────── */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-serif-alt: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-serif: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-serif-alt: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   /* Font sizes */
   --text-2xs: 8px;

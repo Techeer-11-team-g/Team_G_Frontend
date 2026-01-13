@@ -4,7 +4,7 @@ import { LandingPage } from '@/features/landing';
 import { ProfilePage } from '@/features/profile';
 import { CartPage } from '@/features/cart';
 import { OrdersPage } from '@/features/orders';
-import { SignUpPage, OnboardingStep1, OnboardingStep2 } from '@/features/auth';
+import { SignUpPage, LoginPage, OnboardingStep1, OnboardingStep2 } from '@/features/auth';
 
 // 라우트 설정
 export const router = createBrowserRouter([
@@ -19,6 +19,10 @@ export const router = createBrowserRouter([
   {
     path: '/signup',
     element: <SignUpPage />,
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
   },
   {
     path: '/onboarding/step1',

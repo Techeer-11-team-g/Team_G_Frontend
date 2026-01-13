@@ -1,14 +1,18 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { tryOnApi } from '@/api';
-import type { TryOnResult } from '@/types/api';
+import { fittingApi } from '@/api';
+import type {
+  FittingRequest,
+  FittingStartResponse,
+  FittingStatusResponse,
+  FittingResultResponse,
+} from '@/types/api';
 
 /**
  * 가상 피팅 요청 mutation
  */
 export function useTryOnMutation() {
-  return useMutation({
-    mutationFn: ({ userPhoto, productId }: { userPhoto: string; productId: string }) =>
-      tryOnApi.request(userPhoto, productId),
+  return useMutation<FittingStartResponse, Error, FittingRequest>({
+    mutationFn: (request: FittingRequest) => fittingApi.request(request),
     onError: (error) => {
       console.error('Try-on request failed:', error);
     },
@@ -16,30 +20,29 @@ export function useTryOnMutation() {
 }
 
 /**
- * 피팅 상태 폴링 (pending -> processing -> done)
+ * 피팅 상태 폴링 (PENDING -> RUNNING -> DONE)
  */
-export function useTryOnStatus(jobId: string | null, enabled = true) {
-  return useQuery({
-    queryKey: ['tryon', 'status', jobId],
-    queryFn: () => tryOnApi.getStatus(jobId!),
-    enabled: enabled && !!jobId,
+export function useTryOnStatus(fittingImageId: number | null, enabled = true) {
+  return useQuery<FittingStatusResponse>({
+    queryKey: ['tryon', 'status', fittingImageId],
+    queryFn: () => fittingApi.getStatus(fittingImageId!),
+    enabled: enabled && !!fittingImageId,
     refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (status === 'done' || status === 'error') return false;
+      const status = query.state.data?.fitting_image_status;
+      if (status === 'DONE' || status === 'ERROR') return false;
       return 1500; // 1.5초마다 폴링
     },
   });
 }
 
 /**
- * 피팅 결과 조회 (status가 done일 때만 fetch)
+ * 피팅 결과 조회 (status가 DONE일 때만 fetch)
  */
-export function useTryOnResult(jobId: string | null, enabled = true) {
-  return useQuery<TryOnResult>({
-    queryKey: ['tryon', 'result', jobId],
-    queryFn: () => tryOnApi.getResult(jobId!),
-    enabled: enabled && !!jobId,
+export function useTryOnResult(fittingImageId: number | null, enabled = true) {
+  return useQuery<FittingResultResponse>({
+    queryKey: ['tryon', 'result', fittingImageId],
+    queryFn: () => fittingApi.getResult(fittingImageId!),
+    enabled: enabled && !!fittingImageId,
     staleTime: Infinity,
   });
 }
-

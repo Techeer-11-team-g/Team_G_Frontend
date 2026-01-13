@@ -52,20 +52,20 @@ export function SignUpPage() {
   // 성공 화면
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <div className="animate-in zoom-in-50 fade-in duration-500 flex flex-col items-center gap-6">
-          <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center animate-bounce">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
+        <div className="animate-in zoom-in-50 fade-in flex flex-col items-center gap-6 duration-500">
+          <div className="flex h-24 w-24 animate-bounce items-center justify-center rounded-full bg-black">
             <Check size={40} className="text-white" strokeWidth={3} />
           </div>
-          <div className="text-center space-y-2">
+          <div className="space-y-2 text-center">
             <h2 className="text-2xl font-bold">환영합니다!</h2>
-            <p className="text-black/50 text-[14px]">프로필을 설정해볼까요?</p>
+            <p className="text-[14px] text-black/50">프로필을 설정해볼까요?</p>
           </div>
-          <div className="flex gap-1 mt-4">
+          <div className="mt-4 flex gap-1">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="w-2 h-2 rounded-full bg-black animate-pulse"
+                className="h-2 w-2 animate-pulse rounded-full bg-black"
                 style={{ animationDelay: `${i * 150}ms` }}
               />
             ))}
@@ -76,32 +76,29 @@ export function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden relative">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
       {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-3xl animate-pulse" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-40 -top-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-br from-purple-200/30 to-pink-200/30 blur-3xl" />
         <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-cyan-200/20 rounded-full blur-3xl animate-pulse"
+          className="absolute -bottom-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-br from-blue-200/20 to-cyan-200/20 blur-3xl"
           style={{ animationDelay: '1s' }}
         />
       </div>
 
       {/* Header */}
-      <header className="relative w-full px-6 py-8 flex justify-center items-center">
-        <div className="flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-700">
+      <header className="relative flex w-full items-center justify-center px-6 py-8">
+        <div className="animate-in fade-in slide-in-from-top-4 flex flex-col items-center duration-700">
           <h2 className="font-serif text-3xl font-bold tracking-tighter">Dres:sense</h2>
-          <span className="text-[8px] uppercase tracking-widest font-black opacity-30 italic">
-            AI Fashion Studio
-          </span>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative flex-1 max-w-md mx-auto w-full px-6 py-8 flex flex-col justify-center">
+      <main className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-8">
         <div className="space-y-8">
           {/* Title with Icon */}
-          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-5 duration-700">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-black/5 mb-2">
+          <div className="animate-in fade-in slide-in-from-bottom-5 space-y-3 text-center duration-700">
+            <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-black/5">
               <Sparkles size={24} className="text-black/60" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight">회원가입</h1>
@@ -111,7 +108,7 @@ export function SignUpPage() {
           {/* Form */}
           <form
             onSubmit={handleSubmit}
-            className="space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-150"
+            className="animate-in fade-in slide-in-from-bottom-5 space-y-5 delay-150 duration-700"
           >
             {/* Email Input */}
             <div className="space-y-2">
@@ -133,7 +130,7 @@ export function SignUpPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
-                  className={`w-full bg-white border-2 pl-14 pr-12 py-4 text-[14px] rounded-2xl outline-none transition-all duration-300 ${
+                  className={`w-full rounded-2xl border-2 bg-white py-4 pl-14 pr-12 text-[14px] outline-none transition-all duration-300 ${
                     focusedField === 'email'
                       ? 'border-black shadow-lg shadow-black/5'
                       : email && isEmailValid
@@ -146,17 +143,17 @@ export function SignUpPage() {
                 {email && (
                   <div
                     className={`absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 ${
-                      isEmailValid ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+                      isEmailValid ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
                     }`}
                   >
-                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
                       <Check size={14} className="text-white" strokeWidth={3} />
                     </div>
                   </div>
                 )}
               </div>
               {email && !isEmailValid && (
-                <p className="text-[11px] text-red-400 pl-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="animate-in fade-in slide-in-from-top-1 pl-2 text-[11px] text-red-400 duration-200">
                   올바른 이메일 형식을 입력해주세요
                 </p>
               )}
@@ -182,7 +179,7 @@ export function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
-                  className={`w-full bg-white border-2 pl-14 pr-14 py-4 text-[14px] rounded-2xl outline-none transition-all duration-300 ${
+                  className={`w-full rounded-2xl border-2 bg-white py-4 pl-14 pr-14 text-[14px] outline-none transition-all duration-300 ${
                     focusedField === 'password'
                       ? 'border-black shadow-lg shadow-black/5'
                       : 'border-black/10'
@@ -191,7 +188,7 @@ export function SignUpPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-all duration-200 hover:scale-110 active:scale-95"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-black/30 transition-all duration-200 hover:scale-110 hover:text-black/60 active:scale-95"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -199,9 +196,9 @@ export function SignUpPage() {
 
               {/* Password Strength Indicator */}
               {password && (
-                <div className="px-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="animate-in fade-in slide-in-from-top-2 px-2 duration-300">
                   <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 bg-black/5 rounded-full overflow-hidden flex gap-1">
+                    <div className="flex h-1.5 flex-1 gap-1 overflow-hidden rounded-full bg-black/5">
                       {[1, 2, 3, 4].map((level) => (
                         <div
                           key={level}
@@ -247,7 +244,7 @@ export function SignUpPage() {
               >
                 {isLoading ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     <span>잠시만요...</span>
                   </div>
                 ) : (
@@ -258,9 +255,12 @@ export function SignUpPage() {
           </form>
 
           {/* Login Link */}
-          <p className="text-center text-[13px] text-black/50 animate-in fade-in duration-700 delay-300">
+          <p className="animate-in fade-in text-center text-[13px] text-black/50 delay-300 duration-700">
             이미 계정이 있으신가요?{' '}
-            <button className="font-semibold text-black hover:underline transition-all hover:tracking-wide">
+            <button
+              onClick={() => navigate('/login')}
+              className="font-semibold text-black transition-all hover:tracking-wide hover:underline"
+            >
               로그인
             </button>
           </p>
@@ -269,7 +269,7 @@ export function SignUpPage() {
 
       {/* Footer */}
       <footer className="relative py-6 text-center">
-        <p className="text-[9px] uppercase tracking-widest font-black text-black/10">
+        <p className="text-[9px] font-black uppercase tracking-widest text-black/10">
           Dres:sense v1.0.0
         </p>
       </footer>

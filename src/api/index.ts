@@ -1,3 +1,10 @@
 export { apiClient } from './client';
-export { analysisApi, tryOnApi, ordersApi, historyApi } from './endpoints';
+export {
+  uploadedImagesApi,
+  analysisApi,
+  fittingApi,
+  cartApi,
+  ordersApi,
+  usersApi,
+} from './endpoints';
 
