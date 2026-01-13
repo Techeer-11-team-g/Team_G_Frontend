@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { toast } from 'sonner';
 import type { ProductCandidate } from '@/types/api';
 
 // =============================================
@@ -35,7 +36,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product) =>
+      addItem: (product) => {
         set((state) => ({
           items: [
             ...state.items,
@@ -46,12 +47,18 @@ export const useCartStore = create<CartState>()(
               addedAt: Date.now(),
             },
           ],
-        })),
+        }));
+        toast.success('장바구니에 담았습니다', {
+          description: product.name,
+        });
+      },
 
-      removeItem: (itemId) =>
+      removeItem: (itemId) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== itemId),
-        })),
+        }));
+        toast('상품을 삭제했습니다');
+      },
 
       updateQuantity: (itemId, quantity) =>
         set((state) => ({

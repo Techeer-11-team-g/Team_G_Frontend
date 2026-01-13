@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,6 +23,10 @@ export function LoginPage() {
 
     localStorage.setItem('user_email', email);
     localStorage.setItem('is_logged_in', 'true');
+
+    toast.success('환영합니다!', {
+      description: '로그인되었습니다',
+    });
 
     navigate('/home');
   };
