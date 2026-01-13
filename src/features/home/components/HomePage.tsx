@@ -21,6 +21,8 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
     analysisResult,
     error,
     history,
+    status,
+    progress,
     startAnalysis,
     loadFromHistory,
   } = useAnalysisFlow();
@@ -79,7 +81,7 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
         ) : (
           <div className="w-full min-h-[70vh]">
             {isAnalyzing ? (
-              <AnalyzingState />
+              <AnalyzingState status={status} progress={progress} />
             ) : (
               <AnalysisDisplay
                 image={image}
