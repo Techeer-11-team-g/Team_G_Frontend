@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useImageInput, useAnalysisFlow } from '@/hooks';
 import { AnalysisDisplay } from '@/features/analysis';
 import { VirtualFittingRoom } from '@/features/tryon';
+import { ChatRefinementFAB, ChatRefinementModal } from '@/features/chat-refinement';
 import { useCartStore } from '@/store';
 import { ImageInputZone } from './ImageInputZone';
 import { HistoryArchive } from './HistoryArchive';
@@ -23,9 +24,14 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
     history,
     status,
     progress,
+    currentAnalysisId,
     startAnalysis,
     loadFromHistory,
+    updateAnalysisResult,
   } = useAnalysisFlow();
+
+  // Chat refinement
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Image input
   const {
@@ -106,6 +112,23 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
           onClose={() => setIsFittingMode(false)}
           onSaveUserPhoto={onSaveUserPhoto}
           onAddToCart={handleAddToCart}
+        />
+      )}
+
+      {/* Chat Refinement FAB */}
+      <ChatRefinementFAB
+        onClick={() => setIsChatOpen(true)}
+        isVisible={!!analysisResult && !isAnalyzing && !error}
+      />
+
+      {/* Chat Refinement Modal */}
+      {isChatOpen && analysisResult && currentAnalysisId && (
+        <ChatRefinementModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          analysisId={currentAnalysisId}
+          detectedObjects={analysisResult.items}
+          onRefinementComplete={updateAnalysisResult}
         />
       )}
     </>

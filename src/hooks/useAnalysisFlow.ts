@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useAnalysisMutation, useAnalysisStatus, useAnalysisResult } from '@/features/analysis';
 import { uploadedImagesApi } from '@/api';
 import type { LocalHistoryItem, LocalAnalysisResult } from '@/types/local';
-import type { AnalyzedItem } from '@/types/api';
+import type { AnalyzedItem, AnalysisResultResponse } from '@/types/api';
 
 const HISTORY_KEY = 'whats_on_history_v4';
 const MAX_HISTORY = 5;
@@ -20,11 +20,14 @@ interface UseAnalysisFlowReturn {
   // 폴링 상태
   status: AnalysisStatus;
   progress: number;
+  // 채팅 리파인먼트용
+  currentAnalysisId: number | null;
 
   // Actions
   startAnalysis: (base64Image: string) => Promise<void>;
   reset: () => void;
   loadFromHistory: (item: LocalHistoryItem) => void;
+  updateAnalysisResult: (newResult: AnalysisResultResponse) => void;
 }
 
 export function useAnalysisFlow(): UseAnalysisFlowReturn {
@@ -176,6 +179,42 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     [startAnalysis]
   );
 
+  const updateAnalysisResult = useCallback(
+    (newApiResult: AnalysisResultResponse) => {
+      if (!image) return;
+
+      const convertedItems: AnalyzedItem[] = newApiResult.items.map((item) => ({
+        id: item.detected_object_id.toString(),
+        label: item.category_name,
+        category: mapCategoryName(item.category_name),
+        box_2d: [item.bbox.x1, item.bbox.y1, item.bbox.x2, item.bbox.y2] as [number, number, number, number],
+        description: '',
+        aesthetic: '',
+        candidates: item.match ? [{
+          brand: item.match.product.brand_name,
+          name: item.match.product.product_name,
+          price: `₩${item.match.product.selling_price.toLocaleString()}`,
+          image: item.match.product.image_url,
+          source_url: item.match.product.product_url,
+          match_type: 'Exact' as const,
+          color_vibe: '',
+          product_id: item.match.product_id,
+        }] : [],
+      }));
+
+      const result: LocalAnalysisResult = {
+        id: newApiResult.analysis_id.toString(),
+        image: image,
+        items: convertedItems,
+        summary: `${convertedItems.length}개 아이템 업데이트됨`,
+        timestamp: Date.now(),
+      };
+
+      setLocalResult(result);
+    },
+    [image]
+  );
+
   return {
     image,
     isAnalyzing,
@@ -184,9 +223,11 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     history,
     status,
     progress,
+    currentAnalysisId: analysisId,
     startAnalysis,
     reset,
     loadFromHistory,
+    updateAnalysisResult,
   };
 }
 
