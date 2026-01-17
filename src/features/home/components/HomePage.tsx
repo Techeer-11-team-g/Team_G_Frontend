@@ -18,12 +18,16 @@ export function HomePage() {
     analysisResult,
     error,
     history,
+    isLoadingHistory,
+    hasMoreHistory,
+    isFetchingMoreHistory,
     status,
     progress,
     currentAnalysisId,
     startAnalysis,
     loadFromHistory,
     updateAnalysisResult,
+    fetchMoreHistory,
   } = useAnalysisFlow();
 
   // Chat refinement
@@ -74,7 +78,14 @@ export function HomePage() {
               onFileChange={handleFileChange}
             />
 
-            <HistoryArchive history={history} onSelectItem={loadFromHistory} />
+            <HistoryArchive
+              history={history}
+              onSelectItem={loadFromHistory}
+              isLoading={isLoadingHistory}
+              hasMore={hasMoreHistory}
+              isFetchingMore={isFetchingMoreHistory}
+              onLoadMore={fetchMoreHistory}
+            />
           </div>
         ) : (
           <div className="w-full min-h-[70vh]">
