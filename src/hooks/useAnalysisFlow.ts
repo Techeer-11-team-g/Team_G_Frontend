@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAnalysisMutation, useAnalysisStatus, useAnalysisResult } from '@/features/analysis';
 import { uploadedImagesApi } from '@/api';
-import type { LocalHistoryItem, LocalAnalysisResult } from '@/types/local';
-import type { AnalyzedItem, AnalysisResultResponse } from '@/types/api';
-
-const HISTORY_KEY = 'whats_on_history_v4';
-const MAX_HISTORY = 5;
+import type { LocalAnalysisResult } from '@/types/local';
+import type { AnalyzedItem, AnalysisResultResponse, UploadedImage } from '@/types/api';
 
 type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
 
@@ -16,7 +14,10 @@ interface UseAnalysisFlowReturn {
   isAnalyzing: boolean;
   analysisResult: LocalAnalysisResult | undefined;
   error: string | null;
-  history: LocalHistoryItem[];
+  history: UploadedImage[];
+  isLoadingHistory: boolean;
+  hasMoreHistory: boolean;
+  isFetchingMoreHistory: boolean;
   // 폴링 상태
   status: AnalysisStatus;
   progress: number;
@@ -26,16 +27,45 @@ interface UseAnalysisFlowReturn {
   // Actions
   startAnalysis: (base64Image: string) => Promise<void>;
   reset: () => void;
-  loadFromHistory: (item: LocalHistoryItem) => void;
+  loadFromHistory: (item: UploadedImage) => void;
   updateAnalysisResult: (newResult: AnalysisResultResponse) => void;
+  refetchHistory: () => void;
+  fetchMoreHistory: () => void;
 }
 
 export function useAnalysisFlow(): UseAnalysisFlowReturn {
   const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<LocalHistoryItem[]>([]);
   const [analysisId, setAnalysisId] = useState<number | null>(null);
   const [localResult, setLocalResult] = useState<LocalAnalysisResult | undefined>(undefined);
+
+  // History API query with infinite scroll
+  const {
+    data: historyData,
+    isLoading: isLoadingHistory,
+    isFetchingNextPage: isFetchingMoreHistory,
+    hasNextPage: hasMoreHistory,
+    fetchNextPage,
+    refetch: refetchHistory,
+  } = useInfiniteQuery({
+    queryKey: ['uploadedImages'],
+    queryFn: ({ pageParam }) => uploadedImagesApi.list(pageParam, 10),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+    staleTime: 1000 * 60, // 1분
+  });
+
+  // 모든 페이지의 아이템을 평탄화
+  const history = useMemo(
+    () => historyData?.pages.flatMap((page) => page.items) ?? [],
+    [historyData]
+  );
+
+  const fetchMoreHistory = useCallback(() => {
+    if (hasMoreHistory && !isFetchingMoreHistory) {
+      fetchNextPage();
+    }
+  }, [hasMoreHistory, isFetchingMoreHistory, fetchNextPage]);
 
   // Analysis API hooks
   const analysisMutation = useAnalysisMutation();
@@ -56,18 +86,6 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
   const isAnalyzing =
     analysisMutation.isPending ||
     (!!analysisId && statusData?.status !== 'DONE' && statusData?.status !== 'FAILED');
-
-  // Load history from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(HISTORY_KEY);
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch {
-        // Invalid JSON, ignore
-      }
-    }
-  }, []);
 
   // Convert API result to local format when analysis completes
   useEffect(() => {
@@ -109,19 +127,10 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
         description: '상품을 탭하여 자세히 확인하세요',
       });
 
-      // Save to history
-      const newItem: LocalHistoryItem = {
-        id: Date.now().toString(),
-        type: 'analysis',
-        image: image,
-        summary: `${convertedItems.length}개 탐색됨`,
-        timestamp: Date.now(),
-      };
-      const updatedHistory = [newItem, ...history].slice(0, MAX_HISTORY);
-      setHistory(updatedHistory);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+      // 히스토리 갱신
+      refetchHistory();
     }
-  }, [apiResult]);
+  }, [apiResult, refetchHistory]);
 
   // Handle errors
   useEffect(() => {
@@ -178,10 +187,24 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
   }, [analysisMutation]);
 
   const loadFromHistory = useCallback(
-    (item: LocalHistoryItem) => {
-      startAnalysis(item.image);
+    (item: UploadedImage) => {
+      // 히스토리 이미지 URL로 분석 시작
+      setError(null);
+      setAnalysisId(null);
+      setLocalResult(undefined);
+      setImage(item.uploaded_image_url);
+
+      // 이미 업로드된 이미지이므로 바로 분석 시작
+      analysisMutation.mutateAsync({
+        uploadedImageId: item.uploaded_image_id,
+      }).then((result) => {
+        setAnalysisId(result.analysis_id);
+      }).catch((err) => {
+        console.error('[Analysis] Error:', err);
+        setError('분석 시작에 실패했습니다.');
+      });
     },
-    [startAnalysis]
+    [analysisMutation]
   );
 
   const updateAnalysisResult = useCallback(
@@ -228,6 +251,9 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     analysisResult: localResult,
     error,
     history,
+    isLoadingHistory,
+    hasMoreHistory: hasMoreHistory ?? false,
+    isFetchingMoreHistory,
     status,
     progress,
     currentAnalysisId: analysisId,
@@ -235,6 +261,8 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     reset,
     loadFromHistory,
     updateAnalysisResult,
+    refetchHistory,
+    fetchMoreHistory,
   };
 }
 
