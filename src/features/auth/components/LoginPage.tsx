@@ -1,35 +1,45 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
-import { Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { FormInput, LoadingButton, AnimatedBackground } from '@/components/ui';
 import { useFieldFocus } from '@/hooks';
+import { authApi } from '@/api';
+import { useAuthStore } from '@/store';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const { login } = useAuthStore();
+
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { isFocused, getFieldProps } = useFieldFocus<'email' | 'password'>();
 
-  const isFormValid = email && password;
+  const { isFocused, getFieldProps } = useFieldFocus<'username' | 'password'>();
+
+  const isFormValid = username.length > 0 && password.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
 
-    localStorage.setItem('user_email', email);
-    localStorage.setItem('is_logged_in', 'true');
+    try {
+      const response = await authApi.login({ username, password });
 
-    toast.success('환영합니다!', {
-      description: '로그인되었습니다',
-    });
+      // 토큰 저장 (로그인 응답에는 user 정보가 없으므로 기본값 사용)
+      login({ user_id: 0, username, email: '' }, response.access, response.refresh);
 
-    navigate('/home');
+      toast.success('로그인 성공!');
+      navigate('/home');
+    } catch (error: any) {
+      const message = error.response?.data?.detail || '로그인에 실패했습니다';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,7 +59,7 @@ export function LoginPage() {
           {/* Title with Icon */}
           <div className="animate-in fade-in slide-in-from-bottom-5 space-y-3 text-center duration-700">
             <div className="mb-2 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-black/5">
-              <Sparkles size={24} className="text-black/60" />
+              <LogIn size={24} className="text-black/60" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight">로그인</h1>
             <p className="text-[13px] text-black/50">다시 만나서 반가워요</p>
@@ -58,18 +68,20 @@ export function LoginPage() {
           {/* Form */}
           <form
             onSubmit={handleSubmit}
-            className="animate-in fade-in slide-in-from-bottom-5 space-y-5 delay-150 duration-700"
+            className="animate-in fade-in slide-in-from-bottom-5 space-y-4 delay-150 duration-700"
           >
+            {/* Username */}
             <FormInput
-              type="email"
-              placeholder="이메일"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              icon={<Mail size={18} />}
-              isFocused={isFocused('email')}
-              {...getFieldProps('email')}
+              type="text"
+              placeholder="사용자 아이디"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              icon={<User size={18} />}
+              isFocused={isFocused('username')}
+              {...getFieldProps('username')}
             />
 
+            {/* Password */}
             <FormInput
               type={showPassword ? 'text' : 'password'}
               placeholder="비밀번호"
@@ -94,6 +106,7 @@ export function LoginPage() {
                 type="submit"
                 className="w-full"
                 isLoading={isLoading}
+                loadingText="로그인 중..."
                 disabled={!isFormValid}
               >
                 로그인
@@ -101,9 +114,9 @@ export function LoginPage() {
             </div>
           </form>
 
-          {/* Sign Up Link */}
+          {/* SignUp Link */}
           <p className="animate-in fade-in text-center text-[13px] text-black/50 delay-300 duration-700">
-            아직 계정이 없으신가요?{' '}
+            계정이 없으신가요?{' '}
             <button
               onClick={() => navigate('/signup')}
               className="font-semibold text-black transition-all hover:tracking-wide hover:underline"
