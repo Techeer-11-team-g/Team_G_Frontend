@@ -1,35 +1,54 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ChevronRight, Package, Settings, LogOut } from 'lucide-react';
+import { Camera, ChevronRight, Package, Settings, LogOut, Upload, X, MapPin, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import { InfoCard } from '@/components/ui/info-card';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/layout';
-import { useCartStore } from '@/store';
+import { useCartStore, useAuthStore, useUserStore } from '@/store';
+import { useDaumPostcode } from '@/hooks';
+import { userImagesApi, usersApi } from '@/api';
 
 interface UserProfile {
   name: string;
   email: string;
   phone: string;
   photo: string | null;
+  address: string;
+  addressDetail: string;
 }
 
 export function ProfilePage() {
   const navigate = useNavigate();
   const { items: cartItems } = useCartStore();
+  const { logout } = useAuthStore();
+  const { user, userImageUrl, setUserImageUrl } = useUserStore();
+
   const [profile, setProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('user_profile');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          name: '게스트',
-          email: '',
-          phone: '',
-          photo: localStorage.getItem('user_profile_photo'),
-        };
+    const parsed = saved ? JSON.parse(saved) : null;
+    return {
+      name: user?.user_name || parsed?.name || '게스트',
+      email: user?.user_email || parsed?.email || '',
+      phone: user?.phone_number || parsed?.phone || '',
+      photo: parsed?.photo || localStorage.getItem('user_profile_photo'),
+      address: user?.address?.split(' ').slice(0, -1).join(' ') || parsed?.address || '',
+      addressDetail: user?.address?.split(' ').slice(-1)[0] || parsed?.addressDetail || '',
+    };
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(profile);
+  const [fullBodyPhoto, setFullBodyPhoto] = useState<string | null>(userImageUrl);
+  const [isUploadingFullBody, setIsUploadingFullBody] = useState(false);
+
+  const handleAddressComplete = useCallback((addr: string) => {
+    setEditForm((prev) => ({ ...prev, address: addr, addressDetail: '' }));
+  }, []);
+
+  const { openPostcode } = useDaumPostcode({
+    onComplete: handleAddressComplete,
+  });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,12 +62,57 @@ export function ProfilePage() {
     }
   };
 
-  const handleSave = () => {
+  const handleFullBodyPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 로컬 미리보기
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFullBodyPhoto(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // API 업로드
+    setIsUploadingFullBody(true);
+    try {
+      const result = await userImagesApi.upload(file);
+      setUserImageUrl(result.user_image_url);
+      localStorage.setItem('user_full_body_photo', result.user_image_url);
+      toast.success('전신 사진이 업로드되었습니다');
+    } catch (error) {
+      console.error('Full body photo upload failed:', error);
+      toast.error('전신 사진 업로드에 실패했습니다');
+    } finally {
+      setIsUploadingFullBody(false);
+    }
+  };
+
+  const handleSave = async () => {
     setProfile(editForm);
     localStorage.setItem('user_profile', JSON.stringify(editForm));
     if (editForm.photo) {
       localStorage.setItem('user_profile_photo', editForm.photo);
     }
+
+    // API로 주소 업데이트
+    const fullAddress = editForm.addressDetail
+      ? `${editForm.address} ${editForm.addressDetail}`
+      : editForm.address;
+
+    if (fullAddress) {
+      try {
+        await usersApi.updateProfile({
+          address: fullAddress,
+          phone_number: editForm.phone,
+        });
+        toast.success('프로필이 저장되었습니다');
+      } catch (error) {
+        console.error('Profile update failed:', error);
+        toast.error('프로필 저장에 실패했습니다');
+      }
+    }
+
     setIsEditing(false);
   };
 
@@ -84,12 +148,12 @@ export function ProfilePage() {
               )}
             </div>
             {isEditing && (
-              <label className="absolute bottom-0 right-0 w-9 h-9 bg-black text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform">
+              <label className="absolute bottom-0 right-0 w-9 h-9 bg-black text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform overflow-hidden">
                 <Camera size={16} />
                 <input
                   type="file"
                   accept="image/*"
-                  className="hidden"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
                   onChange={handlePhotoChange}
                 />
               </label>
@@ -126,6 +190,30 @@ export function ProfilePage() {
                 onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
                 className="w-full bg-white border border-black/10 px-5 py-4 text-[13px] rounded-2xl outline-none focus:border-black/30 transition-all"
               />
+
+              {/* 주소 입력 */}
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={openPostcode}
+                  className="w-full flex items-center gap-3 bg-white border border-black/10 px-5 py-4 rounded-2xl text-left hover:border-black/20 transition-colors"
+                >
+                  <MapPin size={18} className="text-black/30" />
+                  <span className={editForm.address ? 'text-[13px]' : 'text-[13px] text-black/40'}>
+                    {editForm.address || '주소 검색'}
+                  </span>
+                  <Search size={16} className="ml-auto text-black/30" />
+                </button>
+                {editForm.address && (
+                  <input
+                    type="text"
+                    placeholder="상세 주소 입력"
+                    value={editForm.addressDetail}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, addressDetail: e.target.value }))}
+                    className="w-full bg-white border border-black/10 px-5 py-4 text-[13px] rounded-2xl outline-none focus:border-black/30 transition-all"
+                  />
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -155,12 +243,89 @@ export function ProfilePage() {
           )}
         </div>
 
+        {/* Full Body Photo Section */}
+        {!isEditing && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150">
+            <h4 className="text-[10px] uppercase font-black tracking-widest text-black/20 px-1">
+              전신 사진
+            </h4>
+            <div className="flex justify-center">
+              {fullBodyPhoto ? (
+                <div className="relative">
+                  <div className="w-40 h-60 rounded-3xl bg-black/5 border-2 border-black/10 overflow-hidden shadow-xl">
+                    <img
+                      src={fullBodyPhoto}
+                      alt="Full body"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <label className="absolute bottom-2 right-2 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer overflow-hidden">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleFullBodyPhotoChange}
+                      disabled={isUploadingFullBody}
+                    />
+                    {isUploadingFullBody ? (
+                      <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                    ) : (
+                      <Camera size={18} className="text-black/60" />
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFullBodyPhoto(null);
+                      setUserImageUrl('');
+                      localStorage.removeItem('user_full_body_photo');
+                    }}
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <label className="relative w-40 h-60 rounded-3xl bg-black/[0.03] border-2 border-dashed border-black/10 flex flex-col items-center justify-center gap-4 hover:bg-black/[0.05] hover:border-black/20 transition-all group cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleFullBodyPhotoChange}
+                    disabled={isUploadingFullBody}
+                  />
+                  {isUploadingFullBody ? (
+                    <div className="w-8 h-8 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <div className="w-14 h-14 rounded-full bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
+                        <Upload size={24} className="text-black/30" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[13px] font-semibold text-black/60">전신 사진 등록</p>
+                        <p className="text-[10px] text-black/30 mt-1">가상 피팅에 사용됩니다</p>
+                      </div>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Info Cards */}
         {!isEditing && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-200">
             <InfoCard label="연락처">
               <p className="text-[14px] font-medium">
                 {profile.phone || '전화번호를 등록해주세요'}
+              </p>
+            </InfoCard>
+            <InfoCard label="배송 주소">
+              <p className="text-[14px] font-medium">
+                {profile.address
+                  ? `${profile.address}${profile.addressDetail ? ` ${profile.addressDetail}` : ''}`
+                  : '주소를 등록해주세요'}
               </p>
             </InfoCard>
           </div>
@@ -195,7 +360,15 @@ export function ProfilePage() {
 
         {/* Logout */}
         {!isEditing && (
-          <button className="w-full py-4 flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest font-black text-black/30 hover:text-black/60 transition-colors animate-in fade-in slide-in-from-bottom-3 duration-500 delay-400">
+          <button
+            onClick={() => {
+              logout();
+              localStorage.removeItem('user_profile');
+              localStorage.removeItem('user_profile_photo');
+              navigate('/');
+            }}
+            className="w-full py-4 flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest font-black text-black/30 hover:text-black/60 transition-colors animate-in fade-in slide-in-from-bottom-3 duration-500 delay-400"
+          >
             <LogOut size={14} />
             로그아웃
           </button>
