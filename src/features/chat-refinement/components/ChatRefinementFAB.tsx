@@ -13,7 +13,7 @@ export function ChatRefinementFAB({ onClick, isVisible }: ChatRefinementFABProps
     <button
       onClick={onClick}
       className={cn(
-        'fixed bottom-24 right-6 z-50',
+        'fixed bottom-32 right-6 z-50',
         'w-14 h-14 bg-black text-white rounded-full',
         'flex items-center justify-center',
         'shadow-2xl shadow-black/30',
