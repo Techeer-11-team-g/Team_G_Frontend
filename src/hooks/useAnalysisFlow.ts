@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useAnalysisMutation, useAnalysisStatus, useAnalysisResult } from '@/features/analysis';
 import { uploadedImagesApi } from '@/api';
 import type { LocalAnalysisResult } from '@/types/local';
-import type { AnalyzedItem, AnalysisResultResponse, UploadedImage } from '@/types/api';
+import type { AnalyzedItem, AnalysisResultResponse, UploadedImage, HistoryItem } from '@/types/api';
 
 type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
 
@@ -187,24 +187,53 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
   }, [analysisMutation]);
 
   const loadFromHistory = useCallback(
-    (item: UploadedImage) => {
-      // 히스토리 이미지 URL로 분석 시작
+    async (item: UploadedImage) => {
       setError(null);
       setAnalysisId(null);
       setLocalResult(undefined);
       setImage(item.uploaded_image_url);
 
-      // 이미 업로드된 이미지이므로 바로 분석 시작
-      analysisMutation.mutateAsync({
-        uploadedImageId: item.uploaded_image_id,
-      }).then((result) => {
-        setAnalysisId(result.analysis_id);
-      }).catch((err) => {
-        console.error('[Analysis] Error:', err);
-        setError('분석 시작에 실패했습니다.');
-      });
+      try {
+        // 이미 분석된 결과 조회
+        const historyResult = await uploadedImagesApi.getHistory(item.uploaded_image_id);
+
+        // HistoryItem을 AnalyzedItem으로 변환
+        const convertedItems: AnalyzedItem[] = historyResult.items.map((historyItem: HistoryItem) => ({
+          id: historyItem.detected_object_id.toString(),
+          label: historyItem.category_name,
+          category: mapCategoryName(historyItem.category_name),
+          box_2d: [historyItem.bbox.x1, historyItem.bbox.y1, historyItem.bbox.x2, historyItem.bbox.y2] as [number, number, number, number],
+          description: '',
+          aesthetic: '',
+          candidates: historyItem.match ? [{
+            brand: historyItem.match.product.brand_name,
+            name: historyItem.match.product.product_name,
+            price: `₩${historyItem.match.product.selling_price.toLocaleString()}`,
+            image: historyItem.match.product.image_url,
+            source_url: historyItem.match.product.product_url,
+            match_type: 'Exact' as const,
+            color_vibe: '',
+            product_id: historyItem.match.product_id,
+            sizes: historyItem.match.product.sizes,
+            detected_object_id: historyItem.detected_object_id,
+          }] : [],
+        }));
+
+        const result: LocalAnalysisResult = {
+          id: item.uploaded_image_id.toString(),
+          image: item.uploaded_image_url,
+          items: convertedItems,
+          summary: `${convertedItems.length}개 아이템`,
+          timestamp: Date.now(),
+        };
+
+        setLocalResult(result);
+      } catch (err) {
+        console.error('[History] Error:', err);
+        setError('히스토리 조회에 실패했습니다.');
+      }
     },
-    [analysisMutation]
+    []
   );
 
   const updateAnalysisResult = useCallback(

@@ -17,7 +17,9 @@
       "Bash(gh auth:*)",
       "Bash(git restore:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)"
     ]
   }
 }
