@@ -3,6 +3,61 @@
 // =============================================
 
 // ─────────────────────────────────────────────
+// 인증 (JWT)
+// ─────────────────────────────────────────────
+
+/** 회원가입 요청 */
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+  password_confirm: string;
+}
+
+/** 회원가입 응답 */
+export interface RegisterResponse {
+  user: {
+    user_id: number;
+    username: string;
+    email: string;
+  };
+  tokens: {
+    refresh: string;
+    access: string;
+  };
+}
+
+/** 로그인 요청 */
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+/** 로그인 응답 */
+export interface LoginResponse {
+  refresh: string;
+  access: string;
+}
+
+/** 토큰 갱신 요청 */
+export interface RefreshRequest {
+  refresh: string;
+}
+
+/** 토큰 갱신 응답 */
+export interface RefreshResponse {
+  access: string;
+  refresh: string;
+}
+
+/** 인증된 유저 정보 */
+export interface AuthUser {
+  user_id: number;
+  username: string;
+  email: string;
+}
+
+// ─────────────────────────────────────────────
 // 공통 타입
 // ─────────────────────────────────────────────
 
@@ -28,18 +83,37 @@ export interface PollingInfo {
 export interface UploadedImage {
   uploaded_image_id: number;
   uploaded_image_url: string;
-  created_at: string; // ISO 8601
+  created_at: string;
 }
 
 /** 업로드 이미지 목록 응답 */
 export interface UploadedImagesResponse {
   items: UploadedImage[];
-  next_cursor: number | null;
+  next_cursor: string | null;
+}
+
+// ─────────────────────────────────────────────
+// 유저 이미지 (전신 사진)
+// ─────────────────────────────────────────────
+
+/** 유저 전신 이미지 */
+export interface UserImage {
+  user_image_id: number;
+  user_image_url: string;
+  created_at: string;
 }
 
 // ─────────────────────────────────────────────
 // 상품
 // ─────────────────────────────────────────────
+
+/** 상품 사이즈 정보 */
+export interface ProductSize {
+  size_code_id: number;
+  size_value: string;
+  inventory: number;
+  selected_product_id: number;
+}
 
 /** 상품 정보 */
 export interface Product {
@@ -49,6 +123,7 @@ export interface Product {
   selling_price: number;
   image_url: string;
   product_url: string;
+  sizes?: ProductSize[];
 }
 
 /** 상품 매치 정보 */
@@ -61,13 +136,21 @@ export interface ProductMatch {
 // 분석
 // ─────────────────────────────────────────────
 
+/** 분석 상태 */
+export type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
+
 /** 감지된 객체 */
 export interface DetectedObject {
   detected_object_id: number;
   category_name: string;
   confidence_score: number;
   bbox: BBox;
-  match: ProductMatch;
+  match: ProductMatch | null;
+}
+
+/** 분석 시작 요청 */
+export interface AnalysisStartRequest {
+  uploaded_image_id: number;
 }
 
 /** 분석 시작 응답 */
@@ -80,8 +163,8 @@ export interface AnalysisStartResponse {
 /** 분석 상태 응답 */
 export interface AnalysisStatusResponse {
   analysis_id: number;
-  status: 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR';
-  progress?: number;
+  status: AnalysisStatus;
+  progress: number;
   updated_at: string;
 }
 
@@ -107,9 +190,11 @@ export interface AnalysisPatchRequest {
 // 가상 피팅
 // ─────────────────────────────────────────────
 
+/** 피팅 상태 */
+export type FittingStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
+
 /** 가상 피팅 요청 */
 export interface FittingRequest {
-  detected_object_id: number;
   product_id: number;
   user_image_url: string;
 }
@@ -117,14 +202,16 @@ export interface FittingRequest {
 /** 가상 피팅 시작 응답 */
 export interface FittingStartResponse {
   fitting_image_id: number;
-  fitting_image_status: 'PENDING';
-  polling: PollingInfo;
+  fitting_image_status: 'PENDING' | 'DONE';
+  fitting_image_url: string | null;
+  polling?: PollingInfo;
+  completed_at: string;
 }
 
 /** 가상 피팅 상태 응답 */
 export interface FittingStatusResponse {
-  fitting_image_status: 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR';
-  progress?: number;
+  fitting_image_status: FittingStatus;
+  progress: number;
   updated_at: string;
 }
 
@@ -148,6 +235,8 @@ export interface CartProductDetails {
   selling_price: number;
   main_image_url: string;
   product_url: string;
+  size: string | null;
+  inventory: number;
 }
 
 /** 장바구니 아이템 */
@@ -185,22 +274,22 @@ export interface CartAddResponse {
 // ─────────────────────────────────────────────
 
 /** 주문 상태 */
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'PENDING' | 'PAID' | 'PREPARING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
 
 /** 주문 생성 요청 */
 export interface OrderCreateRequest {
   cart_item_ids: number[];
-  payment_method: string;
   user_id: number;
+  payment_method: string;
 }
 
 /** 주문 생성 응답 */
 export interface OrderCreateResponse {
   order_id: number;
-  order_status: string;
   total_price: number;
   delivery_address: string;
   created_at: string;
+  order_status: string;
 }
 
 /** 주문 목록 아이템 */
@@ -260,23 +349,22 @@ export interface UserProfile {
   user_id: number;
   user_name: string;
   user_email: string;
-  address: string;
-  payment: string;
-  phone_number: string;
-  birth_date?: string;
-  user_image_url?: string;
-  created_at: string;
+  phone_number: string | null;
+  address: string | null;
+  birth_date: string | null;
+  user_image_url: string | null;
+  payment: string | null;
   updated_at: string;
+  created_at: string;
 }
 
 /** 사용자 프로필 수정 요청 */
 export interface UserProfileUpdateRequest {
-  user_name?: string;
-  user_email?: string;
-  address?: string;
-  payment?: string;
   phone_number?: string;
+  address?: string;
   birth_date?: string;
+  user_image_url?: string;
+  payment?: string;
 }
 
 // ─────────────────────────────────────────────
@@ -308,6 +396,7 @@ export interface HistoryItem {
 /** 히스토리 응답 */
 export interface HistoryResponse {
   items: HistoryItem[];
+  next_cursor: string | null;
 }
 
 // ─────────────────────────────────────────────
@@ -325,6 +414,8 @@ export interface ProductCandidate {
   color_vibe: string;
   // 새 API 필드
   product_id?: number;
+  sizes?: ProductSize[];
+  detected_object_id?: number;
 }
 
 /** 분석된 패션 아이템 (레거시) */

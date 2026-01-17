@@ -1,8 +1,16 @@
 import { apiClient } from './client';
 import type {
+  // 인증
+  RegisterRequest,
+  RegisterResponse,
+  LoginRequest,
+  LoginResponse,
+  RefreshRequest,
+  RefreshResponse,
   // 이미지 업로드
   UploadedImage,
   UploadedImagesResponse,
+  UserImage,
   // 분석
   AnalysisStartResponse,
   AnalysisStatusResponse,
@@ -32,6 +40,30 @@ import type {
 } from '@/types/api';
 
 // =============================================
+// 인증 API
+// =============================================
+
+export const authApi = {
+  /** 회원가입 */
+  register: async (request: RegisterRequest): Promise<RegisterResponse> => {
+    const { data } = await apiClient.post('/api/v1/auth/register', request);
+    return data;
+  },
+
+  /** 로그인 */
+  login: async (request: LoginRequest): Promise<LoginResponse> => {
+    const { data } = await apiClient.post('/api/v1/auth/login', request);
+    return data;
+  },
+
+  /** 토큰 갱신 */
+  refresh: async (request: RefreshRequest): Promise<RefreshResponse> => {
+    const { data } = await apiClient.post('/api/v1/auth/refresh', request);
+    return data;
+  },
+};
+
+// =============================================
 // 이미지 업로드 API
 // =============================================
 
@@ -41,13 +73,13 @@ export const uploadedImagesApi = {
     const formData = new FormData();
     formData.append('file', file);
     const { data } = await apiClient.post('/api/v1/uploaded-images', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
     return data;
   },
 
   /** 업로드 이미지 이력 조회 */
-  list: async (cursor?: number, limit = 10): Promise<UploadedImagesResponse> => {
+  list: async (cursor?: string, limit = 10): Promise<UploadedImagesResponse> => {
     const { data } = await apiClient.get('/api/v1/uploaded-images', {
       params: { cursor, limit },
     });
@@ -68,15 +100,30 @@ export const uploadedImagesApi = {
 };
 
 // =============================================
+// 유저 이미지 API (전신 사진)
+// =============================================
+
+export const userImagesApi = {
+  /** 유저 전신 사진 업로드 */
+  upload: async (file: File): Promise<UserImage> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await apiClient.post('/api/v1/user-images', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return data;
+  },
+};
+
+// =============================================
 // 분석 API
 // =============================================
 
 export const analysisApi = {
   /** 이미지 분석 시작 */
-  start: async (uploadedImageId: number, uploadedImageUrl: string): Promise<AnalysisStartResponse> => {
+  start: async (uploadedImageId: number): Promise<AnalysisStartResponse> => {
     const { data } = await apiClient.post('/api/v1/analyses', {
       uploaded_image_id: uploadedImageId,
-      uploaded_image_url: uploadedImageUrl,
     });
     return data;
   },
@@ -154,13 +201,13 @@ export const cartApi = {
 export const ordersApi = {
   /** 주문 생성 */
   create: async (request: OrderCreateRequest): Promise<OrderCreateResponse> => {
-    const { data } = await apiClient.post('/api/v1/orders', request);
+    const { data } = await apiClient.post('/api/v1/orders/', request);
     return data;
   },
 
   /** 주문 목록 조회 */
   list: async (status?: string, cursor?: string, limit?: number): Promise<OrderListResponse> => {
-    const { data } = await apiClient.get('/api/v1/orders', {
+    const { data } = await apiClient.get('/api/v1/orders/', {
       params: { status, cursor, limit },
     });
     return data;
@@ -168,14 +215,14 @@ export const ordersApi = {
 
   /** 주문 상세 조회 */
   get: async (orderId: number): Promise<OrderDetailResponse> => {
-    const { data } = await apiClient.get(`/api/v1/orders/${orderId}`);
+    const { data } = await apiClient.get(`/api/v1/orders/${orderId}/`);
     return data;
   },
 
   /** 주문 취소 */
   cancel: async (orderId: number): Promise<OrderCancelResponse> => {
-    const { data } = await apiClient.patch(`/api/v1/orders/${orderId}`, {
-      order_status: 'cancelled',
+    const { data } = await apiClient.patch(`/api/v1/orders/${orderId}/`, {
+      order_status: 'canceled',
     });
     return data;
   },
