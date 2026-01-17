@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { HomePage } from '@/features/home';
 import { BottomNavigation } from '@/components/layout';
 import { useCartStore } from '@/store';
@@ -9,19 +8,9 @@ import { useCartStore } from '@/store';
  * 책임:
  * - 헤더 레이아웃
  * - 하단 네비게이션
- * - 프로필 사진 상태 (localStorage sync)
  */
 export default function App() {
-  const [userProfilePhoto, setUserProfilePhoto] = useState<string | null>(
-    localStorage.getItem('user_profile_photo')
-  );
-
   const { items: cartItems } = useCartStore();
-
-  const handleSaveUserPhoto = (photo: string) => {
-    setUserProfilePhoto(photo);
-    localStorage.setItem('user_profile_photo', photo);
-  };
 
   return (
     <div className="relative min-h-screen w-full bg-background pb-20 font-sans text-foreground selection:bg-black selection:text-white">
@@ -29,7 +18,7 @@ export default function App() {
       <Header />
 
       {/* Main Content */}
-      <HomePage userProfilePhoto={userProfilePhoto} onSaveUserPhoto={handleSaveUserPhoto} />
+      <HomePage />
 
       {/* Bottom Navigation */}
       <BottomNavigation cartCount={cartItems.length} />

@@ -14,7 +14,10 @@
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
       "Bash(brew install:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git restore:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm ls:*)"
     ]
   }
 }

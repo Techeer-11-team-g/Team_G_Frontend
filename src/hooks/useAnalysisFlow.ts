@@ -8,7 +8,7 @@ import type { AnalyzedItem, AnalysisResultResponse } from '@/types/api';
 const HISTORY_KEY = 'whats_on_history_v4';
 const MAX_HISTORY = 5;
 
-type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR' | null;
+type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
 
 interface UseAnalysisFlowReturn {
   // State
@@ -55,7 +55,7 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
   // Loading state
   const isAnalyzing =
     analysisMutation.isPending ||
-    (!!analysisId && statusData?.status !== 'DONE' && statusData?.status !== 'ERROR');
+    (!!analysisId && statusData?.status !== 'DONE' && statusData?.status !== 'FAILED');
 
   // Load history from localStorage
   useEffect(() => {
@@ -89,6 +89,8 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
           match_type: 'Exact' as const,
           color_vibe: '',
           product_id: item.match.product_id,
+          sizes: item.match.product.sizes,
+          detected_object_id: item.detected_object_id,
         }] : [],
       }));
 
@@ -129,7 +131,7 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
         description: '다시 시도해주세요',
       });
     }
-    if (statusData?.status === 'ERROR') {
+    if (statusData?.status === 'FAILED') {
       setError('분석 처리 중 오류가 발생했습니다.');
       toast.error('분석 처리 중 오류가 발생했습니다');
     }
@@ -147,17 +149,20 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
         const blob = await fetch(base64Image).then((r) => r.blob());
         const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
 
+        console.log('[Analysis] 1. Uploading image...');
         // Upload image first
         const uploadedImage = await uploadedImagesApi.upload(file);
+        console.log('[Analysis] 2. Upload success:', uploadedImage);
 
         // Start analysis with uploaded image
+        console.log('[Analysis] 3. Starting analysis...');
         const result = await analysisMutation.mutateAsync({
           uploadedImageId: uploadedImage.uploaded_image_id,
-          uploadedImageUrl: uploadedImage.uploaded_image_url,
         });
+        console.log('[Analysis] 4. Analysis started:', result);
         setAnalysisId(result.analysis_id);
-      } catch {
-        // Error handled in useEffect
+      } catch (err) {
+        console.error('[Analysis] Error:', err);
         setError('이미지 업로드에 실패했습니다.');
       }
     },
@@ -199,6 +204,8 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
           match_type: 'Exact' as const,
           color_vibe: '',
           product_id: item.match.product_id,
+          sizes: item.match.product.sizes,
+          detected_object_id: item.detected_object_id,
         }] : [],
       }));
 
