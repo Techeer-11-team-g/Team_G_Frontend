@@ -100,6 +100,16 @@ function CandidateCard({ candidate, onAddToCart, onStartFitting }: CandidateCard
       <div className="flex items-center justify-between pt-4 border-t border-black/5">
         <span className="text-[15px] font-mono font-bold">{candidate.price}</span>
         <div className="flex gap-2">
+          {candidate.source_url && (
+            <a
+              href={candidate.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-black/5 text-black text-[9px] uppercase font-black rounded-xl"
+            >
+              Shop
+            </a>
+          )}
           <button
             onClick={onAddToCart}
             className="px-4 py-2 bg-black text-white text-[9px] uppercase font-black rounded-xl"
