@@ -3,7 +3,7 @@ import App from '@/App';
 import { LandingPage } from '@/features/landing';
 import { ProfilePage } from '@/features/profile';
 import { CartPage } from '@/features/cart';
-import { OrdersPage } from '@/features/orders';
+import { OrdersPage, OrderDetailPage } from '@/features/orders';
 import { SignUpPage, LoginPage, OnboardingStep1, OnboardingStep2 } from '@/features/auth';
 import { RootLayout, PageWrapper } from '@/components/layout';
 
@@ -55,6 +55,10 @@ export const router = createBrowserRouter([
       {
         path: 'orders',
         element: withPageTransition(OrdersPage),
+      },
+      {
+        path: 'orders/:orderId',
+        element: withPageTransition(OrderDetailPage),
       },
     ],
   },

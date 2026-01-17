@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/store';
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     // Unicorn Studio 스크립트 로드
@@ -25,8 +27,7 @@ export function LandingPage() {
   }, []);
 
   const handleGetStarted = () => {
-    const isLoggedIn = localStorage.getItem('is_logged_in');
-    if (isLoggedIn) {
+    if (isAuthenticated) {
       navigate('/home');
     } else {
       navigate('/signup');

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-type PollingStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR';
+type PollingStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
 
 interface PollingOptions<T> {
   /** 폴링 시작 여부 */
@@ -108,7 +108,7 @@ export function usePolling<T, R = any>({
           }));
           onError?.(error);
         }
-      } else if (currentStatus === 'ERROR') {
+      } else if (currentStatus === 'FAILED') {
         cleanup();
         const error = new Error('처리 중 오류가 발생했습니다');
         setState((prev) => ({

@@ -13,3 +13,5 @@ export { FormInput } from './form-input';
 export { LoadingButton } from './loading-button';
 export { ProgressIndicator } from './progress-indicator';
 export { AnimatedBackground } from './animated-background';
+export { SizeSelector } from './size-selector';
+export { SizeSelectorModal } from './size-selector-modal';
