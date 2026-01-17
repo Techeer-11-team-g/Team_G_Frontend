@@ -8,7 +8,6 @@ import type {
 
 interface StartAnalysisParams {
   uploadedImageId: number;
-  uploadedImageUrl: string;
 }
 
 // 폴링 설정
@@ -22,8 +21,8 @@ export function useAnalysisMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ uploadedImageId, uploadedImageUrl }: StartAnalysisParams) =>
-      analysisApi.start(uploadedImageId, uploadedImageUrl),
+    mutationFn: ({ uploadedImageId }: StartAnalysisParams) =>
+      analysisApi.start(uploadedImageId),
     onSuccess: (data) => {
       // 분석 시작 시 상태 쿼리 초기화
       queryClient.setQueryData(['analysis', 'status', data.analysis_id], {
@@ -42,7 +41,7 @@ export function useAnalysisMutation() {
 /**
  * 분석 상태 폴링 (PENDING -> RUNNING -> DONE)
  * - 1초마다 상태 확인
- * - DONE 또는 ERROR 시 폴링 중지
+ * - DONE 또는 FAILED 시 폴링 중지
  * - 5분 타임아웃
  */
 export function useAnalysisStatus(analysisId: number | null, enabled = true) {
@@ -60,8 +59,8 @@ export function useAnalysisStatus(analysisId: number | null, enabled = true) {
     enabled: enabled && analysisId !== null,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      // DONE이나 ERROR면 폴링 중지
-      if (status === 'DONE' || status === 'ERROR') return false;
+      // DONE이나 FAILED면 폴링 중지
+      if (status === 'DONE' || status === 'FAILED') return false;
       return POLLING_INTERVAL;
     },
     refetchIntervalInBackground: false, // 백그라운드에서는 폴링 중지
@@ -97,7 +96,7 @@ export function useAnalysisWithPolling() {
   );
 
   const isDone = statusData?.status === 'DONE';
-  const isError = statusData?.status === 'ERROR';
+  const isFailed = statusData?.status === 'FAILED';
 
   const { data: result, error: resultError } = useAnalysisResult(
     analysisId,
@@ -117,9 +116,9 @@ export function useAnalysisWithPolling() {
 
     // 플래그
     isStarting: mutation.isPending,
-    isPolling: mutation.isSuccess && !isDone && !isError,
+    isPolling: mutation.isSuccess && !isDone && !isFailed,
     isDone,
-    isError: isError || !!statusError || !!resultError,
+    isError: isFailed || !!statusError || !!resultError,
 
     // 에러
     error: mutation.error || statusError || resultError,
