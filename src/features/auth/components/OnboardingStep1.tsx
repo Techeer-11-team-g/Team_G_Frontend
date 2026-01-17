@@ -1,17 +1,26 @@
-import { useState, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, User, MapPin, Phone, Upload, X } from 'lucide-react';
+import { Camera, User, MapPin, Phone, Upload, X, Search } from 'lucide-react';
 import { FormInput, LoadingButton, ProgressIndicator } from '@/components/ui';
+import { useDaumPostcode } from '@/hooks';
 
 export function OnboardingStep1() {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [addressDetail, setAddressDetail] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddressComplete = useCallback((addr: string) => {
+    setAddress(addr);
+  }, []);
+
+  const { openPostcode } = useDaumPostcode({
+    onComplete: handleAddressComplete,
+  });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,7 +41,8 @@ export function OnboardingStep1() {
     setIsLoading(true);
 
     // 데이터 저장
-    const profileData = { name, address, phone, photo };
+    const fullAddress = addressDetail ? `${address} ${addressDetail}` : address;
+    const profileData = { name, address: fullAddress, phone, photo };
     localStorage.setItem('user_profile', JSON.stringify(profileData));
     if (photo) {
       localStorage.setItem('user_profile_photo', photo);
@@ -69,14 +79,6 @@ export function OnboardingStep1() {
 
           {/* Photo Upload Section */}
           <div className="flex flex-col items-center space-y-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoChange}
-            />
-
             {photo ? (
               <div className="relative">
                 <div className="w-48 h-72 rounded-3xl bg-black/5 border-2 border-black/10 overflow-hidden shadow-xl">
@@ -93,20 +95,24 @@ export function OnboardingStep1() {
                 >
                   <X size={14} />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-2 right-2 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                >
+                <label className="absolute bottom-2 right-2 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer overflow-hidden">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handlePhotoChange}
+                  />
                   <Camera size={18} className="text-black/60" />
-                </button>
+                </label>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-48 h-72 rounded-3xl bg-black/[0.03] border-2 border-dashed border-black/10 flex flex-col items-center justify-center gap-4 hover:bg-black/[0.05] hover:border-black/20 transition-all group"
-              >
+              <label className="relative w-48 h-72 rounded-3xl bg-black/[0.03] border-2 border-dashed border-black/10 flex flex-col items-center justify-center gap-4 hover:bg-black/[0.05] hover:border-black/20 transition-all group cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  onChange={handlePhotoChange}
+                />
                 <div className="w-16 h-16 rounded-full bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
                   <Upload size={24} className="text-black/30" />
                 </div>
@@ -118,7 +124,7 @@ export function OnboardingStep1() {
                     탭하여 업로드
                   </p>
                 </div>
-              </button>
+              </label>
             )}
 
             <p className="text-[11px] text-black/30 text-center max-w-[200px]">
@@ -136,13 +142,28 @@ export function OnboardingStep1() {
               required
             />
 
-            <FormInput
-              type="text"
-              placeholder="주소"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              icon={<MapPin size={18} />}
-            />
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={openPostcode}
+                className="w-full flex items-center gap-3 bg-white border border-black/10 px-5 py-4 rounded-2xl text-left hover:border-black/20 transition-colors"
+              >
+                <MapPin size={18} className="text-black/30" />
+                <span className={address ? 'text-[13px]' : 'text-[13px] text-black/40'}>
+                  {address || '주소 검색'}
+                </span>
+                <Search size={16} className="ml-auto text-black/30" />
+              </button>
+              {address && (
+                <input
+                  type="text"
+                  placeholder="상세 주소 입력"
+                  value={addressDetail}
+                  onChange={(e) => setAddressDetail(e.target.value)}
+                  className="w-full bg-white border border-black/10 px-5 py-4 text-[13px] rounded-2xl outline-none focus:border-black/30 transition-all"
+                />
+              )}
+            </div>
 
             <FormInput
               type="tel"

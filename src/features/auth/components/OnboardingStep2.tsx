@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Calendar, Lock, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { FormInput, LoadingButton, ProgressIndicator } from '@/components/ui';
+import { usersApi } from '@/api';
+import { useUserStore } from '@/store';
 
 export function OnboardingStep2() {
   const navigate = useNavigate();
+  const setUser = useUserStore((state) => state.setUser);
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -40,23 +44,52 @@ export function OnboardingStep2() {
     setCvc(e.target.value.replace(/\D/g, '').slice(0, 4));
   };
 
+  const callOnboardingApi = async (paymentInfo: string) => {
+    // Step1에서 저장한 프로필 데이터 가져오기
+    const profileStr = localStorage.getItem('onboarding_profile');
+    const profile = profileStr ? JSON.parse(profileStr) : {};
+
+    // SignUp에서 저장한 이메일 가져오기
+    const userEmail = localStorage.getItem('user_email') || '';
+
+    try {
+      const userProfile = await usersApi.onboarding({
+        user_email: userEmail,
+        address: profile.address || '',
+        payment: paymentInfo,
+        phone_number: profile.phone || '',
+      });
+
+      // Store에 유저 정보 저장
+      setUser(userProfile);
+
+      // 임시 데이터 정리
+      localStorage.removeItem('onboarding_profile');
+      localStorage.removeItem('user_email');
+      localStorage.setItem('onboarding_completed', 'true');
+
+      toast.success('회원가입이 완료되었습니다!');
+      navigate('/home');
+    } catch (error) {
+      console.error('Onboarding failed:', error);
+      toast.error('회원가입에 실패했습니다. 다시 시도해주세요.');
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsLoading(true);
 
-    // 결제 정보 저장 (실제로는 토큰화 필요)
-    const paymentData = {
-      cardNumber: cardNumber.replace(/\s/g, '').slice(-4), // 마지막 4자리만 저장
-      expiryDate,
-      cardHolder,
-    };
-    localStorage.setItem('user_payment', JSON.stringify(paymentData));
-    localStorage.setItem('onboarding_completed', 'true');
+    // 결제 정보 (마지막 4자리만 전송)
+    const paymentInfo = `**** **** **** ${cardNumber.replace(/\s/g, '').slice(-4)}`;
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await callOnboardingApi(paymentInfo);
+  };
 
-    navigate('/home');
+  const handleSkip = async () => {
+    setIsLoading(true);
+    await callOnboardingApi('');
   };
 
   const isFormValid =
@@ -211,11 +244,9 @@ export function OnboardingStep2() {
           {/* Skip Button */}
           <button
             type="button"
-            onClick={() => {
-              localStorage.setItem('onboarding_completed', 'true');
-              navigate('/home');
-            }}
-            className="w-full py-3 text-[12px] uppercase tracking-widest font-bold text-black/30 hover:text-black/60 transition-colors"
+            onClick={handleSkip}
+            disabled={isLoading}
+            className="w-full py-3 text-[12px] uppercase tracking-widest font-bold text-black/30 hover:text-black/60 transition-colors disabled:opacity-50"
           >
             나중에 등록하기
           </button>

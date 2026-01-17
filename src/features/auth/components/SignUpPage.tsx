@@ -1,19 +1,32 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Check, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Check, Sparkles, User } from 'lucide-react';
+import { toast } from 'sonner';
 import { FormInput, LoadingButton, AnimatedBackground } from '@/components/ui';
 import { useFieldFocus } from '@/hooks';
+import { authApi } from '@/api';
+import { useAuthStore } from '@/store';
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const { login } = useAuthStore();
+
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const { isFocused, getFieldProps } = useFieldFocus<'email' | 'password'>();
 
+  const { isFocused, getFieldProps } = useFieldFocus<
+    'username' | 'email' | 'password' | 'passwordConfirm'
+  >();
+
+  const isUsernameValid = username.length >= 3;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPasswordMatch = password === passwordConfirm && passwordConfirm.length > 0;
 
   const getPasswordStrength = () => {
     if (!password) return { level: 0, label: '', color: '' };
@@ -31,21 +44,44 @@ export function SignUpPage() {
   };
 
   const passwordStrength = getPasswordStrength();
-  const isFormValid = email && password && isEmailValid;
+  const isFormValid =
+    username &&
+    email &&
+    password &&
+    passwordConfirm &&
+    isUsernameValid &&
+    isEmailValid &&
+    isPasswordMatch;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
 
-    setShowSuccess(true);
-    localStorage.setItem('user_email', email);
-    localStorage.setItem('is_logged_in', 'true');
+    try {
+      const response = await authApi.register({
+        username,
+        email,
+        password,
+        password_confirm: passwordConfirm,
+      });
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    navigate('/onboarding/step1');
+      // 토큰과 유저 정보 저장
+      login(response.user, response.tokens.access, response.tokens.refresh);
+
+      // 온보딩용 이메일 저장
+      localStorage.setItem('user_email', response.user.email);
+
+      setShowSuccess(true);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      navigate('/onboarding/step1');
+    } catch (error: any) {
+      const message = error.response?.data?.detail || '회원가입에 실패했습니다';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 성공 화면
@@ -100,8 +136,30 @@ export function SignUpPage() {
           {/* Form */}
           <form
             onSubmit={handleSubmit}
-            className="animate-in fade-in slide-in-from-bottom-5 space-y-5 delay-150 duration-700"
+            className="animate-in fade-in slide-in-from-bottom-5 space-y-4 delay-150 duration-700"
           >
+            {/* Username */}
+            <FormInput
+              type="text"
+              placeholder="사용자 아이디"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              icon={<User size={18} />}
+              isFocused={isFocused('username')}
+              isValid={username ? isUsernameValid : undefined}
+              isInvalid={username ? !isUsernameValid : undefined}
+              error={username && !isUsernameValid ? '3자 이상 입력해주세요' : undefined}
+              rightIcon={
+                username && isUsernameValid ? (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
+                    <Check size={14} className="text-white" strokeWidth={3} />
+                  </div>
+                ) : undefined
+              }
+              {...getFieldProps('username')}
+            />
+
+            {/* Email */}
             <FormInput
               type="email"
               placeholder="이메일"
@@ -122,6 +180,7 @@ export function SignUpPage() {
               {...getFieldProps('email')}
             />
 
+            {/* Password */}
             <div className="space-y-3">
               <FormInput
                 type={showPassword ? 'text' : 'password'}
@@ -175,6 +234,39 @@ export function SignUpPage() {
                 </div>
               )}
             </div>
+
+            {/* Password Confirm */}
+            <FormInput
+              type={showPasswordConfirm ? 'text' : 'password'}
+              placeholder="비밀번호 확인"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              icon={<Lock size={18} />}
+              isFocused={isFocused('passwordConfirm')}
+              isValid={passwordConfirm ? isPasswordMatch : undefined}
+              isInvalid={passwordConfirm ? !isPasswordMatch : undefined}
+              error={
+                passwordConfirm && !isPasswordMatch ? '비밀번호가 일치하지 않습니다' : undefined
+              }
+              rightIcon={
+                passwordConfirm ? (
+                  isPasswordMatch ? (
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
+                      <Check size={14} className="text-white" strokeWidth={3} />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                      className="text-black/30 transition-all duration-200 hover:scale-110 hover:text-black/60 active:scale-95"
+                    >
+                      {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  )
+                ) : undefined
+              }
+              {...getFieldProps('passwordConfirm')}
+            />
 
             <div className="pt-2">
               <LoadingButton
