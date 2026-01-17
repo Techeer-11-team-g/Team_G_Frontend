@@ -5,8 +5,8 @@ interface ImageInputZoneProps {
   urlInput: string;
   onInputModeChange: (mode: InputMode) => void;
   onUrlInputChange: (url: string) => void;
-  onFileClick: () => void;
   onUrlSubmit: (e: React.FormEvent) => void;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function ImageInputZone({
@@ -14,8 +14,8 @@ export function ImageInputZone({
   urlInput,
   onInputModeChange,
   onUrlInputChange,
-  onFileClick,
   onUrlSubmit,
+  onFileChange,
 }: ImageInputZoneProps) {
   const modes: InputMode[] = ['upload', 'url'];
 
@@ -40,11 +40,9 @@ export function ImageInputZone({
 
       {/* Dynamic Input Zone */}
       <div className="min-h-[400px] bg-white rounded-5xl border border-black/5 shadow-2xl flex flex-col items-center justify-center p-10 relative group transition-all overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#000_1px,_transparent_1px)] bg-[size:32px_32px] opacity-[0.03]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_#000_1px,_transparent_1px)] bg-[size:32px_32px] opacity-[0.03]" />
 
-        {inputMode === 'upload' && (
-          <UploadContent onClick={onFileClick} />
-        )}
+        {inputMode === 'upload' && <UploadContent onFileChange={onFileChange} />}
 
         {inputMode === 'url' && (
           <UrlContent
@@ -58,12 +56,19 @@ export function ImageInputZone({
   );
 }
 
-function UploadContent({ onClick }: { onClick: () => void }) {
+function UploadContent({
+  onFileChange,
+}: {
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
   return (
-    <div
-      className="flex flex-col items-center gap-8 text-center relative z-10 w-full h-full cursor-pointer"
-      onClick={onClick}
-    >
+    <label className="flex flex-col items-center gap-8 text-center relative z-10 w-full h-full cursor-pointer">
+      <input
+        type="file"
+        accept="image/*"
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        onChange={onFileChange}
+      />
       <div className="w-24 h-24 bg-black/5 rounded-full flex items-center justify-center text-black/20 group-hover:bg-black group-hover:text-white transition-all duration-700">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -83,7 +88,7 @@ function UploadContent({ onClick }: { onClick: () => void }) {
         <p className="text-[14px] font-bold uppercase tracking-[0.3em]">갤러리 업로드</p>
         <p className="text-[10px] text-black/30 font-medium">탭하여 이미지 파일 선택</p>
       </div>
-    </div>
+    </label>
   );
 }
 

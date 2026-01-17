@@ -1,5 +1,5 @@
 interface AnalyzingStateProps {
-  status?: 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR' | null;
+  status?: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
   progress?: number;
 }
 

@@ -3,18 +3,14 @@ import { useImageInput, useAnalysisFlow } from '@/hooks';
 import { AnalysisDisplay } from '@/features/analysis';
 import { VirtualFittingRoom } from '@/features/tryon';
 import { ChatRefinementFAB, ChatRefinementModal } from '@/features/chat-refinement';
-import { useCartStore } from '@/store';
+import { useCart } from '@/features/cart';
+import { SizeSelectorModal } from '@/components/ui';
 import { ImageInputZone } from './ImageInputZone';
 import { HistoryArchive } from './HistoryArchive';
 import { AnalyzingState } from './AnalyzingState';
 import type { ProductCandidate } from '@/types/api';
 
-interface HomePageProps {
-  userProfilePhoto: string | null;
-  onSaveUserPhoto: (photo: string) => void;
-}
-
-export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
+export function HomePage() {
   // Analysis flow
   const {
     image,
@@ -37,19 +33,18 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
   const {
     inputMode,
     urlInput,
-    fileInputRef,
     setInputMode,
     setUrlInput,
     handleFileChange,
     handleUrlSubmit,
-    triggerFileInput,
   } = useImageInput({
     onImageReady: startAnalysis,
     onError: () => {}, // Error handled in useAnalysisFlow
   });
 
   // Cart
-  const { addItem: addToCart } = useCartStore();
+  const { addToCart, isAdding } = useCart();
+  const [productForCart, setProductForCart] = useState<ProductCandidate | null>(null);
 
   // Virtual fitting
   const [isFittingMode, setIsFittingMode] = useState(false);
@@ -57,7 +52,12 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
     useState<ProductCandidate | null>(null);
 
   const handleAddToCart = (product: ProductCandidate) => {
-    addToCart(product);
+    setProductForCart(product);
+  };
+
+  const handleConfirmAddToCart = async (selectedProductId: number) => {
+    await addToCart(selectedProductId, 1);
+    setProductForCart(null);
   };
 
   return (
@@ -70,19 +70,11 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
               urlInput={urlInput}
               onInputModeChange={setInputMode}
               onUrlInputChange={setUrlInput}
-              onFileClick={triggerFileInput}
               onUrlSubmit={handleUrlSubmit}
+              onFileChange={handleFileChange}
             />
 
             <HistoryArchive history={history} onSelectItem={loadFromHistory} />
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
           </div>
         ) : (
           <div className="w-full min-h-[70vh]">
@@ -108,9 +100,7 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
       {isFittingMode && selectedProductForFitting && (
         <VirtualFittingRoom
           product={selectedProductForFitting}
-          userPhoto={userProfilePhoto}
           onClose={() => setIsFittingMode(false)}
-          onSaveUserPhoto={onSaveUserPhoto}
           onAddToCart={handleAddToCart}
         />
       )}
@@ -129,6 +119,16 @@ export function HomePage({ userProfilePhoto, onSaveUserPhoto }: HomePageProps) {
           analysisId={currentAnalysisId}
           detectedObjects={analysisResult.items}
           onRefinementComplete={updateAnalysisResult}
+        />
+      )}
+
+      {/* Size Selector Modal */}
+      {productForCart && (
+        <SizeSelectorModal
+          product={productForCart}
+          onClose={() => setProductForCart(null)}
+          onConfirm={handleConfirmAddToCart}
+          isLoading={isAdding}
         />
       )}
     </>
