@@ -6,7 +6,6 @@ interface ProductBriefProps {
   showRetryOptions: boolean;
   onStartFitting: () => void;
   onTryOther: () => void;
-  onRetakePhoto: () => void;
 }
 
 export function ProductBrief({
@@ -15,7 +14,6 @@ export function ProductBrief({
   showRetryOptions,
   onStartFitting,
   onTryOther,
-  onRetakePhoto,
 }: ProductBriefProps) {
   return (
     <div className="bg-white rounded-5xl p-8 border border-black/5 shadow-sm space-y-6">
@@ -41,25 +39,12 @@ export function ProductBrief({
       )}
 
       {showRetryOptions && (
-        <div className="space-y-6 pt-6 border-t border-black/5">
-          <p className="text-[10px] uppercase text-center font-black text-black/20 tracking-[0.3em]">
-            Style Selection Loop
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={onTryOther}
-              className="py-4 border border-black/10 rounded-2xl text-[10px] uppercase font-black tracking-widest text-black/40 active:bg-black/5"
-            >
-              다른 상품 시도
-            </button>
-            <button
-              onClick={onRetakePhoto}
-              className="py-4 border border-black/10 rounded-2xl text-[10px] uppercase font-black tracking-widest text-black/40 active:bg-black/5"
-            >
-              사진 다시 촬영
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={onTryOther}
+          className="w-full py-4 border border-black/10 rounded-2xl text-[10px] uppercase font-black tracking-widest text-black/40 active:bg-black/5"
+        >
+          다른 상품 시도
+        </button>
       )}
     </div>
   );

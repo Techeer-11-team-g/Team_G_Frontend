@@ -55,7 +55,7 @@ export function useTryOnStatus(fittingImageId: number | null, enabled = true) {
     enabled: enabled && fittingImageId !== null,
     refetchInterval: (query) => {
       const status = query.state.data?.fitting_image_status;
-      if (status === 'DONE' || status === 'ERROR') return false;
+      if (status === 'DONE' || status === 'FAILED') return false;
       return POLLING_INTERVAL;
     },
     refetchIntervalInBackground: false, // 백그라운드에서는 폴링 중지
@@ -91,7 +91,7 @@ export function useFittingWithPolling() {
   );
 
   const isDone = statusData?.fitting_image_status === 'DONE';
-  const isError = statusData?.fitting_image_status === 'ERROR';
+  const isError = statusData?.fitting_image_status === 'FAILED';
 
   const { data: result, error: resultError } = useTryOnResult(
     fittingImageId,
