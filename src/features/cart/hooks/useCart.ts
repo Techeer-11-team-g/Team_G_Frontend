@@ -41,7 +41,8 @@ export function useCart() {
   });
 
   const addToCart = async (selectedProductId: number, quantity: number = 1) => {
-    await addMutation.mutateAsync({ selected_product_id: selectedProductId, quantity });
+    const result = await addMutation.mutateAsync({ selected_product_id: selectedProductId, quantity });
+    return result.cart_id;
   };
 
   const removeFromCart = async (cartItemId: number) => {

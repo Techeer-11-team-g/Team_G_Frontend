@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Camera, ChevronRight, Package, Settings, LogOut, Upload, X, MapPin, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { InfoCard } from '@/components/ui/info-card';
 import { Button } from '@/components/ui/button';
-import { BottomNavigation } from '@/components/layout';
+import { ImageCropper } from '@/components/ui/image-cropper';
+import { BottomNavigation, PageHeader } from '@/components/layout';
 import { useCartStore, useAuthStore, useUserStore } from '@/store';
 import { useDaumPostcode } from '@/hooks';
 import { userImagesApi, usersApi } from '@/api';
@@ -20,9 +22,10 @@ interface UserProfile {
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { items: cartItems } = useCartStore();
+  const queryClient = useQueryClient();
+  const { items: cartItems, clearCart } = useCartStore();
   const { logout } = useAuthStore();
-  const { user, userImageUrl, setUserImageUrl } = useUserStore();
+  const { user, userImageUrl, setUserImageUrl, clearUser } = useUserStore();
 
   const [profile, setProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('user_profile');
@@ -41,6 +44,7 @@ export function ProfilePage() {
   const [editForm, setEditForm] = useState(profile);
   const [fullBodyPhoto, setFullBodyPhoto] = useState<string | null>(userImageUrl);
   const [isUploadingFullBody, setIsUploadingFullBody] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
   const handleAddressComplete = useCallback((addr: string) => {
     setEditForm((prev) => ({ ...prev, address: addr, addressDetail: '' }));
@@ -62,18 +66,31 @@ export function ProfilePage() {
     }
   };
 
-  const handleFullBodyPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFullBodyPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 로컬 미리보기
+    // 크롭 모달 열기
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFullBodyPhoto(reader.result as string);
+      setImageToCrop(reader.result as string);
     };
     reader.readAsDataURL(file);
 
-    // API 업로드
+    // input 초기화 (같은 파일 다시 선택 가능하도록)
+    e.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setImageToCrop(null);
+
+    // 로컬 미리보기
+    const previewUrl = URL.createObjectURL(croppedBlob);
+    setFullBodyPhoto(previewUrl);
+
+    // Blob을 File로 변환하여 API 업로드
+    const file = new File([croppedBlob], 'full-body.jpg', { type: 'image/jpeg' });
+
     setIsUploadingFullBody(true);
     try {
       const result = await userImagesApi.upload(file);
@@ -83,6 +100,7 @@ export function ProfilePage() {
     } catch (error) {
       console.error('Full body photo upload failed:', error);
       toast.error('전신 사진 업로드에 실패했습니다');
+      setFullBodyPhoto(userImageUrl); // 실패 시 원래 사진으로 복구
     } finally {
       setIsUploadingFullBody(false);
     }
@@ -123,12 +141,7 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="sticky top-0 w-full px-6 py-6 z-sticky bg-background/90 backdrop-blur-xl border-b border-black/5">
-        <div className="max-w-md mx-auto">
-          <h2 className="text-[11px] uppercase tracking-[0.4em] font-black">프로필</h2>
-        </div>
-      </header>
+      <PageHeader title="프로필" showBack />
 
       <main className="max-w-md mx-auto px-6 py-8 space-y-8">
         {/* Profile Photo Section */}
@@ -221,7 +234,7 @@ export function ProfilePage() {
         {/* Action Buttons */}
         <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
           {!isEditing ? (
-            <Button variant="outline" className="flex-1" onClick={() => setIsEditing(true)}>
+            <Button className="flex-1" onClick={() => setIsEditing(true)}>
               프로필 수정
             </Button>
           ) : (
@@ -264,7 +277,7 @@ export function ProfilePage() {
                       type="file"
                       accept="image/*"
                       className="absolute inset-0 opacity-0 cursor-pointer"
-                      onChange={handleFullBodyPhotoChange}
+                      onChange={handleFullBodyPhotoSelect}
                       disabled={isUploadingFullBody}
                     />
                     {isUploadingFullBody ? (
@@ -291,7 +304,7 @@ export function ProfilePage() {
                     type="file"
                     accept="image/*"
                     className="absolute inset-0 opacity-0 cursor-pointer"
-                    onChange={handleFullBodyPhotoChange}
+                    onChange={handleFullBodyPhotoSelect}
                     disabled={isUploadingFullBody}
                   />
                   {isUploadingFullBody ? (
@@ -362,9 +375,14 @@ export function ProfilePage() {
         {!isEditing && (
           <button
             onClick={() => {
+              // 모든 사용자 데이터 초기화
               logout();
+              clearUser();
+              clearCart();
+              queryClient.clear(); // React Query 캐시 전체 초기화
               localStorage.removeItem('user_profile');
               localStorage.removeItem('user_profile_photo');
+              localStorage.removeItem('user_full_body_photo');
               navigate('/');
             }}
             className="w-full py-4 flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest font-black text-black/30 hover:text-black/60 transition-colors animate-in fade-in slide-in-from-bottom-3 duration-500 delay-400"
@@ -384,6 +402,16 @@ export function ProfilePage() {
 
       {/* Bottom Navigation */}
       <BottomNavigation cartCount={cartItems.length} />
+
+      {/* Image Cropper Modal */}
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          aspectRatio={3 / 4}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setImageToCrop(null)}
+        />
+      )}
     </div>
   );
 }

@@ -84,6 +84,8 @@ export interface UploadedImage {
   uploaded_image_id: number;
   uploaded_image_url: string;
   created_at: string;
+  auto_analyze?: boolean;
+  analysis_id?: number;
 }
 
 /** 업로드 이미지 목록 응답 */
@@ -123,7 +125,7 @@ export interface Product {
   selling_price: number;
   image_url: string;
   product_url: string;
-  sizes?: ProductSize[];
+  sizes?: ProductSize[] | string[];
 }
 
 /** 상품 매치 정보 */
@@ -414,7 +416,7 @@ export interface ProductCandidate {
   color_vibe: string;
   // 새 API 필드
   product_id?: number;
-  sizes?: ProductSize[];
+  sizes?: ProductSize[] | string[];
   detected_object_id?: number;
 }
 

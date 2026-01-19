@@ -1,7 +1,7 @@
 import { Package, ChevronRight, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
-import { BottomNavigation } from '@/components/layout';
+import { BottomNavigation, PageHeader } from '@/components/layout';
 import { useCartStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../hooks/useOrders';
@@ -28,15 +28,11 @@ export function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="bg-background/90 sticky top-0 z-sticky w-full border-b border-black/5 px-6 py-6 backdrop-blur-xl">
-        <div className="mx-auto max-w-md">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.4em]">주문 내역</h2>
-          <p className="mt-1 text-[9px] text-black/40">
-            {isLoading ? '로딩 중...' : `${orders.length}개의 주문`}
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="주문 내역"
+        subtitle={isLoading ? '로딩 중...' : `${orders.length}개의 주문`}
+        showBack
+      />
 
       <main className="mx-auto max-w-md px-6 py-8">
         {isLoading ? (
@@ -61,7 +57,7 @@ export function OrdersPage() {
             title="주문 내역이 없습니다"
             description="첫 주문을 해보세요"
             action={
-              <Button variant="outline" onClick={() => navigate('/home')}>
+              <Button onClick={() => navigate('/home')}>
                 쇼핑하러 가기
               </Button>
             }

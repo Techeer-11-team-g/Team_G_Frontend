@@ -1,3 +1,5 @@
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
 interface AnalyzingStateProps {
   status?: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
   progress?: number;
@@ -15,9 +17,14 @@ export function AnalyzingState({ status, progress = 0 }: AnalyzingStateProps) {
   const displayProgress = Math.min(Math.max(progress, 0), 100);
 
   return (
-    <div className="h-[60vh] flex flex-col items-center justify-center space-y-10 animate-in fade-in">
-      <div className="font-serif text-5xl italic opacity-10 text-black animate-pulse">
-        Analyzing...
+    <div className="h-[60vh] flex flex-col items-center justify-center space-y-8 animate-in fade-in">
+      {/* Lottie Animation */}
+      <div className="w-48 h-48">
+        <DotLottieReact
+          src="/Cosmos.lottie"
+          loop
+          autoplay
+        />
       </div>
 
       {/* Progress Bar */}

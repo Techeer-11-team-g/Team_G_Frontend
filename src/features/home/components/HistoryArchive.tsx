@@ -49,14 +49,14 @@ export function HistoryArchive({
 
       {isLoading ? (
         // 초기 로딩 스켈레톤
-        <div className="grid grid-cols-3">
+        <div className="grid grid-cols-3 gap-0.5">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="aspect-[3/4] bg-black/5 animate-pulse" />
           ))}
         </div>
       ) : history.length > 0 ? (
         <>
-          <div className="grid grid-cols-3">
+          <div className="grid grid-cols-3 gap-0.5">
             {history.map((item) => (
               <div
                 key={item.uploaded_image_id}

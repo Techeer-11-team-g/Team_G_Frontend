@@ -1,6 +1,6 @@
 import { cn } from '@/utils/cn';
 import { FittingStatus } from './FittingStatus';
-import { ViewModeToggle } from './ViewModeToggle';
+import { SegmentedControl } from '@/components/ui';
 
 interface FittingPreviewProps {
   userPhoto: string;
@@ -10,6 +10,8 @@ interface FittingPreviewProps {
   statusMessage: string;
   onViewModeChange: (mode: 'before' | 'after') => void;
 }
+
+const VIEW_OPTIONS = ['before', 'after'] as const;
 
 export function FittingPreview({
   userPhoto,
@@ -22,23 +24,37 @@ export function FittingPreview({
   const displayImage = viewMode === 'before' || !fittingResult ? userPhoto : fittingResult;
 
   return (
-    <div className="relative aspect-[3/4] w-full bg-black/5 rounded-[3rem] shadow-2xl overflow-hidden border-4 border-white">
-      <div className="w-full h-full relative flex items-center justify-center bg-black/5">
-        <img
-          src={displayImage}
-          alt="피팅 결과"
-          className={cn(
-            'max-w-full max-h-full object-contain transition-all duration-700',
-            isGenerating ? 'opacity-30 blur-sm grayscale' : 'opacity-100'
+    <div className="space-y-4">
+      {/* 이미지 프리뷰 */}
+      <div className="relative w-full flex justify-center">
+        <div className="relative">
+          <img
+            src={displayImage}
+            alt="피팅 결과"
+            className={cn(
+              'max-w-full max-h-[50vh] object-contain rounded-3xl transition-all duration-700',
+              isGenerating ? 'opacity-30 blur-sm grayscale' : 'opacity-100'
+            )}
+          />
+
+          {isGenerating && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <FittingStatus message={statusMessage} />
+            </div>
           )}
-        />
-
-        {fittingResult && !isGenerating && (
-          <ViewModeToggle viewMode={viewMode} onChange={onViewModeChange} />
-        )}
-
-        {isGenerating && <FittingStatus message={statusMessage} />}
+        </div>
       </div>
+
+      {/* Before/After 토글 - 이미지 아래에 배치 */}
+      {fittingResult && !isGenerating && (
+        <div className="flex justify-center">
+          <SegmentedControl
+            options={VIEW_OPTIONS}
+            value={viewMode}
+            onChange={onViewModeChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

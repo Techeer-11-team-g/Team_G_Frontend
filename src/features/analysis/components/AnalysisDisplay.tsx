@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ImageWithOverlay } from './ImageWithOverlay';
 import { MatchedProductFeed } from './MatchedProductFeed';
-import { ItemDetailModal } from './ItemDetailModal';
 import { AnalysisError } from './AnalysisError';
-import { BackToTopButton } from '@/components/ui';
 import type { AnalyzedItem, ProductCandidate } from '@/types/api';
 
 interface AnalysisDisplayProps {
@@ -11,7 +9,9 @@ interface AnalysisDisplayProps {
   items: AnalyzedItem[] | null;
   error: string | null;
   onStartFitting: (product: ProductCandidate) => void;
-  onAddToCart: (product: ProductCandidate) => void;
+  onAddToCart: (selectedProductId: number) => void;
+  onBuyNow: (selectedProductId: number) => void;
+  processingProductId?: number | null;
 }
 
 export function AnalysisDisplay({
@@ -20,6 +20,8 @@ export function AnalysisDisplay({
   error,
   onStartFitting,
   onAddToCart,
+  onBuyNow,
+  processingProductId,
 }: AnalysisDisplayProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
@@ -34,7 +36,13 @@ export function AnalysisDisplay({
     );
   }, [items]);
 
-  const currentItem = selectedIndex !== null && items ? items[selectedIndex] : null;
+  // 선택된 아이템의 detected_object_id
+  const highlightedDetectedObjectId = useMemo(() => {
+    if (selectedIndex === null || !items) return null;
+    const item = items[selectedIndex];
+    // candidates의 첫 번째 상품의 detected_object_id 반환
+    return item.candidates[0]?.detected_object_id ?? null;
+  }, [selectedIndex, items]);
 
   if (error) {
     return <AnalysisError message={error} onRetry={() => window.location.reload()} />;
@@ -54,19 +62,11 @@ export function AnalysisDisplay({
       <MatchedProductFeed
         products={allMatches}
         onAddToCart={onAddToCart}
+        onBuyNow={onBuyNow}
         onStartFitting={onStartFitting}
+        processingProductId={processingProductId}
+        highlightedDetectedObjectId={highlightedDetectedObjectId}
       />
-
-      {currentItem && (
-        <ItemDetailModal
-          item={currentItem}
-          onClose={() => setSelectedIndex(null)}
-          onAddToCart={onAddToCart}
-          onStartFitting={onStartFitting}
-        />
-      )}
-
-      <BackToTopButton />
     </div>
   );
 }

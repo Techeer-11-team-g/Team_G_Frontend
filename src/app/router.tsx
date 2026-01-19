@@ -4,7 +4,7 @@ import { LandingPage } from '@/features/landing';
 import { ProfilePage } from '@/features/profile';
 import { CartPage } from '@/features/cart';
 import { OrdersPage, OrderDetailPage } from '@/features/orders';
-import { SignUpPage, LoginPage, OnboardingStep1, OnboardingStep2 } from '@/features/auth';
+import { SignUpPage, LoginPage, OnboardingStep1, OnboardingStep2, OnboardingStep3 } from '@/features/auth';
 import { RootLayout, PageWrapper } from '@/components/layout';
 
 // 페이지 래퍼 - 애니메이션 적용
@@ -43,6 +43,10 @@ export const router = createBrowserRouter([
       {
         path: 'onboarding/step2',
         element: withPageTransition(OnboardingStep2),
+      },
+      {
+        path: 'onboarding/step3',
+        element: withPageTransition(OnboardingStep3),
       },
       {
         path: 'profile',

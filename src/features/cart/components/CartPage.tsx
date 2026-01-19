@@ -6,7 +6,7 @@ import { useOrderCreate } from '@/features/orders';
 import { useAuthStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { BottomNavigation } from '@/components/layout';
+import { BottomNavigation, PageHeader } from '@/components/layout';
 
 export function CartPage() {
   const navigate = useNavigate();
@@ -51,15 +51,7 @@ export function CartPage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Header */}
-      <header className="bg-background/90 sticky top-0 z-sticky w-full border-b border-black/5 px-6 py-6 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-md items-center justify-between">
-          <div>
-            <h2 className="text-[11px] font-black uppercase tracking-[0.4em]">장바구니</h2>
-            <p className="mt-1 text-[9px] text-black/40">{totalQuantity}개 상품</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="장바구니" subtitle={`${totalQuantity}개 상품`} showBack />
 
       <main className="mx-auto max-w-md px-6 py-8">
         {items.length === 0 ? (
@@ -68,7 +60,7 @@ export function CartPage() {
             title="장바구니가 비어있습니다"
             description="마음에 드는 상품을 담아보세요"
             action={
-              <Button variant="outline" onClick={() => navigate('/home')}>
+              <Button onClick={() => navigate('/home')}>
                 쇼핑하러 가기
               </Button>
             }

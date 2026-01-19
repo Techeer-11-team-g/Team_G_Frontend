@@ -13,18 +13,22 @@ import type { ProductCandidate } from '@/types/api';
 interface VirtualFittingRoomProps {
   product: ProductCandidate;
   onClose: () => void;
-  onAddToCart: (product: ProductCandidate) => void;
+  onAddToCart: (selectedProductId: number) => void;
+  onBuyNow: (selectedProductId: number) => void;
 }
 
 export function VirtualFittingRoom({
   product,
   onClose,
   onAddToCart,
+  onBuyNow,
 }: VirtualFittingRoomProps) {
   const navigate = useNavigate();
   const { userImageUrl } = useUserStore();
   const [viewMode, setViewMode] = useState<'before' | 'after'>('after');
   const [fittingImageId, setFittingImageId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // TryOn API hooks
   const tryOnMutation = useTryOnMutation();
@@ -145,10 +149,36 @@ export function VirtualFittingRoom({
 
       <FittingFooter
         product={product}
-        onAddToCart={() => onAddToCart(product)}
-        onCheckout={() => {
-          /* TODO: Navigate to checkout */
+        selectedProductId={selectedProductId}
+        onSizeSelect={setSelectedProductId}
+        onAddToCart={async () => {
+          const productId = selectedProductId || product.product_id;
+          if (!productId) {
+            toast.error('사이즈를 선택해주세요');
+            return;
+          }
+          setIsProcessing(true);
+          try {
+            await onAddToCart(productId);
+          } finally {
+            setIsProcessing(false);
+          }
         }}
+        onBuyNow={async () => {
+          const productId = selectedProductId || product.product_id;
+          if (!productId) {
+            toast.error('사이즈를 선택해주세요');
+            return;
+          }
+          setIsProcessing(true);
+          try {
+            await onBuyNow(productId);
+            onClose();
+          } finally {
+            setIsProcessing(false);
+          }
+        }}
+        isProcessing={isProcessing}
       />
     </div>
   );

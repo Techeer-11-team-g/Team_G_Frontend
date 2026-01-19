@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Loader2, XCircle } from 'lucide-react';
+import { Package, Loader2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/layout';
 import { useOrderDetail, useOrderCancel } from '../hooks/useOrders';
 
 const statusLabels: Record<string, string> = {
@@ -68,23 +69,12 @@ export function OrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      {/* Header */}
-      <header className="bg-background/90 sticky top-0 z-sticky w-full border-b border-black/5 px-6 py-4 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-md items-center gap-4">
-          <button
-            onClick={() => navigate('/orders')}
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h2 className="text-[11px] font-black uppercase tracking-[0.4em]">주문 상세</h2>
-            {order && (
-              <p className="mt-1 text-[9px] text-black/40">주문번호: {order.order_id}</p>
-            )}
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="주문 상세"
+        subtitle={order ? `주문번호: ${order.order_id}` : undefined}
+        showBack
+        onBack={() => navigate('/orders')}
+      />
 
       <main className="mx-auto max-w-md px-6 py-8">
         {isLoading ? (

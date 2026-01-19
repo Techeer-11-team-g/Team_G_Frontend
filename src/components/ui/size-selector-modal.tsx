@@ -31,9 +31,12 @@ export function SizeSelectorModal({
   };
 
   const sizes = product.sizes || [];
-  const hasAvailableSizes = sizes.some(
-    (s: ProductSize) => s.inventory > 0 && s.selected_product_id !== null
-  );
+  const isStringArray = sizes.length > 0 && typeof sizes[0] === 'string';
+  const hasAvailableSizes = isStringArray
+    ? sizes.length > 0
+    : (sizes as ProductSize[]).some(
+        (s) => s.inventory > 0 && s.selected_product_id !== null
+      );
 
   return (
     <div className="fixed inset-0 z-[700] flex items-end justify-center">
@@ -70,11 +73,32 @@ export function SizeSelectorModal({
             사이즈 선택
           </p>
           {sizes.length > 0 ? (
-            <SizeSelector
-              sizes={sizes}
-              selectedSizeId={selectedSizeId}
-              onSelect={handleSizeSelect}
-            />
+            isStringArray ? (
+              <div className="flex flex-wrap gap-2">
+                {(sizes as string[]).map((size, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setSelectedSizeId(index);
+                      if (product.product_id) setSelectedProductId(product.product_id);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
+                      selectedSizeId === index
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 hover:bg-black/10'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <SizeSelector
+                sizes={sizes as ProductSize[]}
+                selectedSizeId={selectedSizeId}
+                onSelect={handleSizeSelect}
+              />
+            )
           ) : (
             <p className="text-[13px] text-black/40">사이즈 정보가 없습니다</p>
           )}

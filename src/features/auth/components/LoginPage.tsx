@@ -4,12 +4,13 @@ import { User, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormInput, LoadingButton, AnimatedBackground } from '@/components/ui';
 import { useFieldFocus } from '@/hooks';
-import { authApi } from '@/api';
-import { useAuthStore } from '@/store';
+import { authApi, usersApi } from '@/api';
+import { useAuthStore, useUserStore } from '@/store';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuthStore();
+  const setUser = useUserStore((state) => state.setUser);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,8 +30,17 @@ export function LoginPage() {
     try {
       const response = await authApi.login({ username, password });
 
-      // 토큰 저장 (로그인 응답에는 user 정보가 없으므로 기본값 사용)
+      // 토큰 저장
       login({ user_id: 0, username, email: '' }, response.access, response.refresh);
+
+      // 사용자 프로필 조회 및 저장
+      try {
+        const userProfile = await usersApi.getProfile();
+        setUser(userProfile);
+      } catch {
+        // 프로필 조회 실패해도 로그인은 성공
+        console.log('Profile fetch failed, but login succeeded');
+      }
 
       toast.success('로그인 성공!');
       navigate('/home');

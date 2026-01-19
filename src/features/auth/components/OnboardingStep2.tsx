@@ -1,121 +1,72 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Calendar, Lock, Check } from 'lucide-react';
+import { Camera, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { FormInput, LoadingButton, ProgressIndicator } from '@/components/ui';
-import { usersApi } from '@/api';
+import { LoadingButton, ProgressIndicator, ImageCropper } from '@/components/ui';
+import { userImagesApi } from '@/api';
 import { useUserStore } from '@/store';
 
 export function OnboardingStep2() {
   const navigate = useNavigate();
-  const setUser = useUserStore((state) => state.setUser);
+  const setUserImageUrl = useUserStore((state) => state.setUserImageUrl);
 
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [croppedFile, setCroppedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
-  // 카드번호 포맷팅 (4자리씩 끊기)
-  const formatCardNumber = (value: string) => {
-    const numbers = value.replace(/\D/g, '').slice(0, 16);
-    const groups = numbers.match(/.{1,4}/g);
-    return groups ? groups.join(' ') : numbers;
-  };
-
-  // 만료일 포맷팅 (MM/YY)
-  const formatExpiryDate = (value: string) => {
-    const numbers = value.replace(/\D/g, '').slice(0, 4);
-    if (numbers.length >= 2) {
-      return numbers.slice(0, 2) + '/' + numbers.slice(2);
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-    return numbers;
+    // input 초기화 (같은 파일 다시 선택 가능하도록)
+    e.target.value = '';
   };
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardNumber(formatCardNumber(e.target.value));
-  };
-
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setExpiryDate(formatExpiryDate(e.target.value));
-  };
-
-  const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCvc(e.target.value.replace(/\D/g, '').slice(0, 4));
-  };
-
-  const callOnboardingApi = async (paymentInfo: string) => {
-    // Step1에서 저장한 프로필 데이터 가져오기
-    const profileStr = localStorage.getItem('onboarding_profile');
-    const profile = profileStr ? JSON.parse(profileStr) : {};
-
-    // SignUp에서 저장한 이메일 가져오기
-    const userEmail = localStorage.getItem('user_email') || '';
-
-    try {
-      const userProfile = await usersApi.onboarding({
-        user_email: userEmail,
-        address: profile.address || '',
-        payment: paymentInfo,
-        phone_number: profile.phone || '',
-      });
-
-      // Store에 유저 정보 저장
-      setUser(userProfile);
-
-      // 임시 데이터 정리
-      localStorage.removeItem('onboarding_profile');
-      localStorage.removeItem('user_email');
-      localStorage.setItem('onboarding_completed', 'true');
-
-      toast.success('회원가입이 완료되었습니다!');
-      navigate('/home');
-    } catch (error) {
-      console.error('Onboarding failed:', error);
-      toast.error('회원가입에 실패했습니다. 다시 시도해주세요.');
-      setIsLoading(false);
-    }
+  const handleCropComplete = (croppedBlob: Blob) => {
+    setImageToCrop(null);
+    const previewUrl = URL.createObjectURL(croppedBlob);
+    setPhoto(previewUrl);
+    // Blob을 File로 변환해서 저장
+    const file = new File([croppedBlob], 'user-image.jpg', { type: 'image/jpeg' });
+    setCroppedFile(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setIsLoading(true);
 
-    // 결제 정보 (마지막 4자리만 전송)
-    const paymentInfo = `**** **** **** ${cardNumber.replace(/\s/g, '').slice(-4)}`;
+    try {
+      // 사진이 있으면 서버에 업로드
+      if (croppedFile) {
+        const result = await userImagesApi.upload(croppedFile);
+        // 업로드된 이미지 URL을 store에 저장
+        setUserImageUrl(result.user_image_url);
+        toast.success('전신 사진이 등록되었습니다');
+      }
 
-    await callOnboardingApi(paymentInfo);
+      navigate('/onboarding/step3');
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      toast.error('이미지 업로드에 실패했습니다');
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  const handleSkip = async () => {
-    setIsLoading(true);
-    await callOnboardingApi('');
-  };
-
-  const isFormValid =
-    cardNumber.replace(/\s/g, '').length >= 15 &&
-    expiryDate.length === 5 &&
-    cvc.length >= 3;
-
-  // 카드 브랜드 감지
-  const getCardBrand = () => {
-    const number = cardNumber.replace(/\s/g, '');
-    if (number.startsWith('4')) return 'Visa';
-    if (/^5[1-5]/.test(number)) return 'Mastercard';
-    if (/^3[47]/.test(number)) return 'Amex';
-    if (/^62/.test(number)) return 'UnionPay';
-    return null;
-  };
-
-  const cardBrand = getCardBrand();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="w-full px-6 py-6">
         <div className="max-w-md mx-auto">
-          <ProgressIndicator currentStep={2} totalSteps={2} className="mb-6" />
+          <ProgressIndicator currentStep={2} totalSteps={3} className="mb-6" />
           <h2 className="text-[11px] uppercase tracking-[0.4em] font-black text-black/40">
-            Step 2 of 2
+            Step 2 of 3
           </h2>
         </div>
       </header>
@@ -125,118 +76,75 @@ export function OnboardingStep2() {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
           {/* Title */}
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight">결제수단 등록</h1>
+            <h1 className="text-2xl font-bold tracking-tight">전신 사진 등록</h1>
             <p className="text-[13px] text-black/50">
-              빠른 결제를 위해 카드를 등록해주세요
+              가상 피팅을 위해 전신 사진을 등록해주세요
             </p>
           </div>
 
-          {/* Card Preview */}
-          <div className="relative h-48 rounded-3xl bg-gradient-to-br from-black via-black/90 to-black/80 p-6 shadow-2xl overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/4" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-1/2 -translate-x-1/4" />
-            </div>
-
-            {/* Card Content */}
-            <div className="relative h-full flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <div className="w-12 h-9 rounded bg-gradient-to-br from-yellow-300 to-yellow-500 flex items-center justify-center">
-                  <div className="w-8 h-6 rounded-sm bg-gradient-to-br from-yellow-200 to-yellow-400 opacity-80" />
+          {/* Photo Upload Section */}
+          <div className="flex flex-col items-center space-y-4">
+            {photo ? (
+              <div className="relative">
+                <div className="w-48 h-72 rounded-3xl bg-black/5 border-2 border-black/10 overflow-hidden shadow-xl">
+                  <img
+                    src={photo}
+                    alt="Full body"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                {cardBrand && (
-                  <span className="text-white/80 text-[13px] font-bold tracking-wider">
-                    {cardBrand}
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setPhoto(null)}
+                  className="absolute -top-2 -right-2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                >
+                  <X size={14} />
+                </button>
+                <label className="absolute bottom-2 right-2 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer overflow-hidden">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handlePhotoSelect}
+                  />
+                  <Camera size={18} className="text-black/60" />
+                </label>
               </div>
-
-              <div>
-                <p className="text-white/90 text-lg tracking-[0.2em] font-mono">
-                  {cardNumber || '•••• •••• •••• ••••'}
-                </p>
-                <div className="flex justify-between items-end mt-4">
-                  <div>
-                    <p className="text-white/40 text-[9px] uppercase tracking-wider">
-                      Card Holder
-                    </p>
-                    <p className="text-white/90 text-[13px] font-medium uppercase tracking-wider">
-                      {cardHolder || 'YOUR NAME'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white/40 text-[9px] uppercase tracking-wider">
-                      Expires
-                    </p>
-                    <p className="text-white/90 text-[13px] font-medium tracking-wider">
-                      {expiryDate || 'MM/YY'}
-                    </p>
-                  </div>
+            ) : (
+              <label className="relative w-48 h-72 rounded-3xl bg-black/[0.03] border-2 border-dashed border-black/10 flex flex-col items-center justify-center gap-4 hover:bg-black/[0.05] hover:border-black/20 transition-all group cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  onChange={handlePhotoSelect}
+                />
+                <div className="w-16 h-16 rounded-full bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
+                  <Upload size={24} className="text-black/30" />
                 </div>
-              </div>
-            </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-semibold text-black/60">
+                    전신 사진 등록
+                  </p>
+                  <p className="text-[11px] text-black/30 mt-1">
+                    탭하여 업로드
+                  </p>
+                </div>
+              </label>
+            )}
+
+            <p className="text-[11px] text-black/30 text-center max-w-[200px]">
+              정면 전신 사진을 권장합니다. 가상 피팅에 사용됩니다.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <FormInput
-              type="text"
-              placeholder="카드번호"
-              value={cardNumber}
-              onChange={handleCardNumberChange}
-              icon={<CreditCard size={18} />}
-              className="font-mono tracking-wider"
-              inputMode="numeric"
-            />
-
-            <FormInput
-              type="text"
-              placeholder="카드 소유자 이름"
-              value={cardHolder}
-              onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-              className="uppercase tracking-wider"
-            />
-
-            <div className="flex gap-4">
-              <FormInput
-                type="text"
-                placeholder="MM/YY"
-                value={expiryDate}
-                onChange={handleExpiryChange}
-                icon={<Calendar size={18} />}
-                wrapperClassName="flex-1"
-                className="font-mono"
-                inputMode="numeric"
-              />
-              <FormInput
-                type="text"
-                placeholder="CVC"
-                value={cvc}
-                onChange={handleCvcChange}
-                icon={<Lock size={18} />}
-                wrapperClassName="flex-1"
-                className="font-mono"
-                inputMode="numeric"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 py-3 px-4 bg-black/[0.03] rounded-2xl">
-              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                <Check size={14} className="text-green-600" />
-              </div>
-              <p className="text-[11px] text-black/50 flex-1">
-                모든 결제 정보는 안전하게 암호화되어 처리됩니다
-              </p>
-            </div>
-
             <div className="pt-4">
               <LoadingButton
                 type="submit"
                 className="w-full"
                 isLoading={isLoading}
-                disabled={!isFormValid}
               >
-                완료
+                다음
               </LoadingButton>
             </div>
           </form>
@@ -244,14 +152,23 @@ export function OnboardingStep2() {
           {/* Skip Button */}
           <button
             type="button"
-            onClick={handleSkip}
-            disabled={isLoading}
-            className="w-full py-3 text-[12px] uppercase tracking-widest font-bold text-black/30 hover:text-black/60 transition-colors disabled:opacity-50"
+            onClick={() => navigate('/onboarding/step3')}
+            className="w-full py-3 text-[12px] uppercase tracking-widest font-bold text-black/30 hover:text-black/60 transition-colors"
           >
-            나중에 등록하기
+            건너뛰기
           </button>
         </div>
       </main>
+
+      {/* Image Cropper Modal */}
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          aspectRatio={3 / 4}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setImageToCrop(null)}
+        />
+      )}
     </div>
   );
 }

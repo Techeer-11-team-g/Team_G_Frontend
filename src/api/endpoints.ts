@@ -68,10 +68,11 @@ export const authApi = {
 // =============================================
 
 export const uploadedImagesApi = {
-  /** 이미지 업로드 */
+  /** 이미지 업로드 (auto_analyze=true로 분석 자동 시작) */
   upload: async (file: File): Promise<UploadedImage> => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('auto_analyze', 'true');
     const { data } = await apiClient.post('/api/v1/uploaded-images', formData, {
       headers: { 'Content-Type': undefined },
     });

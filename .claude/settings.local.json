@@ -19,7 +19,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npm ls:*)",
       "Bash(git checkout:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

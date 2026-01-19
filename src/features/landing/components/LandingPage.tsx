@@ -30,7 +30,7 @@ export function LandingPage() {
     if (isAuthenticated) {
       navigate('/home');
     } else {
-      navigate('/signup');
+      navigate('/login');
     }
   };
 
@@ -46,7 +46,7 @@ export function LandingPage() {
         <div className="mx-auto w-full max-w-md space-y-4">
           <Button
             onClick={handleGetStarted}
-            className="w-full bg-white text-black shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:bg-white/90"
+            className="w-full bg-black text-white shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:bg-black/90"
             size="lg"
           >
             <span>시작하기</span>
