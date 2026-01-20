@@ -8,5 +8,6 @@ export {
   cartApi,
   ordersApi,
   usersApi,
+  chatApi,
 } from './endpoints';
 

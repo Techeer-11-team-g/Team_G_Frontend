@@ -20,7 +20,13 @@
       "Bash(npm ls:*)",
       "Bash(git checkout:*)",
       "Bash(git pull:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:larsonstudio.com)",
+      "WebFetch(domain:www.grilledpixels.com)",
+      "WebFetch(domain:www.davidrinman.com)",
+      "WebFetch(domain:my.spline.design)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)"
     ]
   }
 }

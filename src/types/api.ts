@@ -409,13 +409,15 @@ export interface HistoryResponse {
 export interface ProductCandidate {
   brand: string;
   name: string;
-  price: string;
+  price: string | number;
   image: string;
   source_url: string;
   match_type: 'Exact' | 'Similar';
   color_vibe: string;
   // 새 API 필드
   product_id?: number;
+  image_url?: string;
+  similarity_score?: number;
   sizes?: ProductSize[] | string[];
   detected_object_id?: number;
 }
@@ -447,4 +449,149 @@ export interface TryOnResult {
   userPhoto: string;
   resultImage: string;
   createdAt: number;
+}
+
+// ─────────────────────────────────────────────
+// 채팅 API (통합 인터페이스)
+// ─────────────────────────────────────────────
+
+/** 채팅 응답 타입 */
+export type ChatResponseType =
+  | 'search_results'
+  | 'no_results'
+  | 'analysis_pending'
+  | 'fitting_pending'
+  | 'fitting_result'
+  | 'batch_fitting_pending'
+  | 'cart_added'
+  | 'cart_list'
+  | 'cart_empty'
+  | 'order_created'
+  | 'size_recommendation'
+  | 'ask_selection'
+  | 'ask_size'
+  | 'ask_body_info'
+  | 'ask_user_image'
+  | 'ask_search_first'
+  | 'greeting'
+  | 'help'
+  | 'general'
+  | 'error';
+
+/** 채팅 상품 정보 */
+export interface ChatProduct {
+  index?: number;
+  product_id: number;
+  brand_name: string;
+  product_name: string;
+  selling_price: number;
+  image_url: string;
+  product_url: string;
+  sizes?: string[];
+}
+
+/** 채팅 장바구니 아이템 */
+export interface ChatCartItem {
+  cart_item_id: number;
+  product: ChatProduct;
+  size: string;
+  quantity: number;
+}
+
+/** 채팅 Suggestion */
+export interface ChatSuggestion {
+  label: string;
+  action: string;
+}
+
+/** 채팅 응답 데이터 */
+export interface ChatResponseData {
+  // search_results
+  products?: ChatProduct[];
+  total_count?: number;
+  understood_intent?: string;
+
+  // fitting
+  fitting_id?: number;
+  fitting_ids?: number[];
+  fitting_image_url?: string;
+  color_match_score?: number;
+
+  // cart
+  items?: ChatCartItem[];
+  total_price?: number;
+  item_count?: number;
+
+  // order
+  order_id?: number;
+  items_count?: number;
+
+  // size
+  recommended_size?: string;
+  available_sizes?: string[];
+  confidence?: number;
+
+  // status (pending)
+  analysis_id?: number;
+  status_url?: string;
+
+  // error
+  error_type?: string;
+
+  // common
+  product?: ChatProduct;
+  size?: string;
+  quantity?: number;
+
+  // ask_selection
+  options?: ChatProduct[];
+}
+
+/** 채팅 응답 본문 */
+export interface ChatResponseBody {
+  text: string;
+  type: ChatResponseType;
+  data: ChatResponseData;
+  suggestions: ChatSuggestion[];
+}
+
+/** 채팅 컨텍스트 */
+export interface ChatContext {
+  current_analysis_id?: number;
+  has_search_results: boolean;
+  has_user_image: boolean;
+  cart_item_count: number;
+}
+
+/** 채팅 API 응답 */
+export interface ChatResponse {
+  session_id: string;
+  response: ChatResponseBody;
+  context: ChatContext;
+}
+
+/** 채팅 상태 확인 요청 */
+export interface ChatStatusRequest {
+  type: 'analysis' | 'fitting';
+  id: number;
+  session_id: string;
+}
+
+/** 채팅 세션 턴 */
+export interface ChatTurn {
+  user: string;
+  assistant: string;
+  timestamp: string;
+}
+
+/** 채팅 세션 정보 */
+export interface ChatSession {
+  session_id: string;
+  user_id: number;
+  created_at: string;
+  last_activity: string;
+  has_search_results: boolean;
+  has_user_image: boolean;
+  cart_item_count: number;
+  turns: ChatTurn[];
 }

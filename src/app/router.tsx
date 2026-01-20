@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
-import App from '@/App';
 import { LandingPage } from '@/features/landing';
+import { AgentHomePage } from '@/features/home';
 import { ProfilePage } from '@/features/profile';
 import { CartPage } from '@/features/cart';
 import { OrdersPage, OrderDetailPage } from '@/features/orders';
@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'home',
-        element: withPageTransition(App),
+        element: withPageTransition(AgentHomePage),
       },
       {
         path: 'signup',

@@ -74,7 +74,12 @@ export const useCartStore = create<CartState>()(
       getTotalAmount: () =>
         get().items.reduce((acc, item) => {
           // 가격 문자열에서 숫자만 추출 (예: "₩1,200,000" -> 1200000)
-          const price = parseInt(item.price.replace(/[^0-9]/g, ''), 10) || 0;
+          let price: number;
+          if (typeof item.price === 'number') {
+            price = item.price;
+          } else {
+            price = parseInt(item.price.replace(/[^0-9]/g, ''), 10) || 0;
+          }
           return acc + price * item.quantity;
         }, 0),
     }),
