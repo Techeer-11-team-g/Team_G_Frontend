@@ -26,7 +26,10 @@
       "WebFetch(domain:www.davidrinman.com)",
       "WebFetch(domain:my.spline.design)",
       "Bash(npm run dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:www.osmo.supply)",
+      "Bash(echo:*)",
+      "Bash(npm run type-check:*)"
     ]
   }
 }
