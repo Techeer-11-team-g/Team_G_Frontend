@@ -20,7 +20,7 @@ export interface ChatMessage {
   imagePreview?: string;
 }
 
-export type ContentPanelView = 'welcome' | 'products' | 'fitting' | 'cart';
+export type ContentPanelView = 'welcome' | 'products' | 'imageAnalysis' | 'fitting' | 'cart';
 
 export interface ContentPanelData {
   view: ContentPanelView;
@@ -29,6 +29,10 @@ export interface ContentPanelData {
   fittingProduct?: ChatProduct;
   cartItems?: ChatResponse['response']['data']['items'];
   totalPrice?: number;
+  // Image analysis specific
+  uploadedImageUrl?: string;
+  uploadedImageId?: number;
+  isImageAnalysis?: boolean;
 }
 
 export type AgentState = 'idle' | 'thinking' | 'searching' | 'presenting' | 'error';
@@ -38,23 +42,42 @@ export type AgentState = 'idle' | 'thinking' | 'searching' | 'presenting' | 'err
 // =============================================
 
 const SESSION_STORAGE_KEY = 'chat_session_id';
+const CHAT_STATE_KEY = 'chat_state';
 const POLLING_INTERVAL = 3000;
 const MAX_POLLING_ATTEMPTS = 20;
+
+// Helper to get saved chat state
+const getSavedChatState = (): { messages: ChatMessage[]; contentPanelData: ContentPanelData } | null => {
+  try {
+    const saved = sessionStorage.getItem(CHAT_STATE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to parse saved chat state:', e);
+  }
+  return null;
+};
 
 // =============================================
 // Hook
 // =============================================
 
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Load saved state on init
+  const savedState = getSavedChatState();
+
+  const [messages, setMessages] = useState<ChatMessage[]>(savedState?.messages || []);
   const [sessionId, setSessionId] = useState<string | null>(() => {
     return localStorage.getItem(SESSION_STORAGE_KEY);
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [contentPanelData, setContentPanelData] = useState<ContentPanelData>({
-    view: 'welcome',
-  });
-  const [agentState, setAgentState] = useState<AgentState>('idle');
+  const [contentPanelData, setContentPanelData] = useState<ContentPanelData>(
+    savedState?.contentPanelData || { view: 'welcome' }
+  );
+  const [agentState, setAgentState] = useState<AgentState>(
+    savedState?.contentPanelData?.view === 'products' ? 'presenting' : 'idle'
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Persist session ID
@@ -65,6 +88,21 @@ export function useChat() {
       localStorage.removeItem(SESSION_STORAGE_KEY);
     }
   }, [sessionId]);
+
+  // Persist chat state (messages and content panel data)
+  useEffect(() => {
+    // Only save if there's meaningful content
+    if (messages.length > 0 || contentPanelData.view !== 'welcome') {
+      try {
+        sessionStorage.setItem(
+          CHAT_STATE_KEY,
+          JSON.stringify({ messages, contentPanelData })
+        );
+      } catch (e) {
+        console.error('Failed to save chat state:', e);
+      }
+    }
+  }, [messages, contentPanelData]);
 
   // Poll for async operation completion
   const pollUntilComplete = useCallback(
@@ -113,17 +151,38 @@ export function useChat() {
   );
 
   // Update content panel based on response type
-  const updateContentPanel = useCallback((response: ChatResponse['response']) => {
+  const updateContentPanel = useCallback((
+    response: ChatResponse['response'],
+    uploadedImageUrl?: string
+  ) => {
     const { type, data } = response;
 
     switch (type) {
-      case 'search_results':
-        setContentPanelData({
-          view: 'products',
-          products: data.products,
-        });
+      case 'search_results': {
+        // Check if this is image analysis (has bbox data or uploaded_image_url)
+        const hasImageAnalysis =
+          uploadedImageUrl ||
+          data.uploaded_image_url ||
+          data.products?.some((p) => p.bbox);
+
+        if (hasImageAnalysis) {
+          setContentPanelData({
+            view: 'imageAnalysis',
+            products: data.products,
+            uploadedImageUrl: uploadedImageUrl || data.uploaded_image_url,
+            uploadedImageId: data.uploaded_image_id,
+            isImageAnalysis: true,
+          });
+        } else {
+          setContentPanelData({
+            view: 'products',
+            products: data.products,
+            isImageAnalysis: false,
+          });
+        }
         setAgentState('presenting');
         break;
+      }
 
       case 'no_results':
         setContentPanelData({ view: 'welcome' });
@@ -188,11 +247,14 @@ export function useChat() {
       setError(null);
       setAgentState('thinking');
 
+      // Track the uploaded image URL for image analysis view
+      const uploadedImagePreview = image ? URL.createObjectURL(image) : undefined;
+
       // Add user message to chat
       const userMessage: ChatMessage = {
         role: 'user',
         content: message || '(이미지 업로드)',
-        imagePreview: image ? URL.createObjectURL(image) : undefined,
+        imagePreview: uploadedImagePreview,
       };
       setMessages((prev) => [...prev, userMessage]);
 
@@ -230,8 +292,8 @@ export function useChat() {
         };
         setMessages((prev) => [...prev, assistantMessage]);
 
-        // Update content panel
-        updateContentPanel(finalResponse.response);
+        // Update content panel (pass image URL if this was an image upload)
+        updateContentPanel(finalResponse.response, uploadedImagePreview);
       } catch (err) {
         console.error('Chat error:', err);
         setError('오류가 발생했어요. 다시 시도해주세요.');
@@ -300,6 +362,7 @@ export function useChat() {
     setAgentState('idle');
     setError(null);
     localStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(CHAT_STATE_KEY);
   }, [sessionId]);
 
   // Reset to idle (without clearing session)
@@ -308,6 +371,7 @@ export function useChat() {
     setContentPanelData({ view: 'welcome' });
     setAgentState('idle');
     setError(null);
+    sessionStorage.removeItem(CHAT_STATE_KEY);
   }, []);
 
   return {

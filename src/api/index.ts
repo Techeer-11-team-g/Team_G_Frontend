@@ -9,5 +9,6 @@ export {
   ordersApi,
   usersApi,
   chatApi,
+  feedApi,
 } from './endpoints';
 

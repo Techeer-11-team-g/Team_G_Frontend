@@ -306,3 +306,41 @@ export const chatApi = {
     await apiClient.delete(`/api/v1/chat/sessions/${sessionId}`);
   },
 };
+
+// =============================================
+// 피드 API (Pinterest 스타일)
+// =============================================
+
+import type {
+  FeedResponse,
+  VisibilityToggleRequest,
+} from '@/types/api';
+
+export const feedApi = {
+  /** 공개 피드 조회 */
+  getPublicFeed: async (params?: {
+    limit?: number;
+    cursor?: string;
+    category?: string;
+  }): Promise<FeedResponse> => {
+    const { data } = await apiClient.get('/api/v1/feed', { params });
+    return data;
+  },
+
+  /** 내 히스토리 조회 */
+  getMyHistory: async (params?: {
+    limit?: number;
+    cursor?: string;
+  }): Promise<FeedResponse> => {
+    const { data } = await apiClient.get('/api/v1/my-history', { params });
+    return data;
+  },
+
+  /** 공개/비공개 토글 */
+  toggleVisibility: async (
+    imageId: number,
+    request: VisibilityToggleRequest
+  ): Promise<void> => {
+    await apiClient.patch(`/api/v1/uploaded-images/${imageId}/visibility`, request);
+  },
+};

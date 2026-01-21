@@ -112,8 +112,9 @@ export interface UserImage {
 /** 상품 사이즈 정보 */
 export interface ProductSize {
   size_code_id: number;
-  size_value: string;
-  inventory: number;
+  size_value?: string;
+  size?: string; // Alternative field name from some API responses
+  inventory?: number;
   selected_product_id: number;
 }
 
@@ -402,6 +403,72 @@ export interface HistoryResponse {
 }
 
 // ─────────────────────────────────────────────
+// 피드 (Pinterest 스타일)
+// ─────────────────────────────────────────────
+
+/** 피드 사용자 정보 */
+export interface FeedUser {
+  id: number;
+  username: string;
+}
+
+/** 피드 상품 사이즈 */
+export interface FeedProductSize {
+  size_code_id: number;
+  size_value: string;
+}
+
+/** 피드 매칭 상품 */
+export interface FeedMatchedProduct {
+  id: number;
+  brand_name: string;
+  product_name: string;
+  selling_price: number;
+  image_url: string;
+  product_url: string;
+  sizes?: FeedProductSize[];
+}
+
+/** 피드 바운딩 박스 */
+export interface FeedBBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/** 피드 감지 객체 */
+export interface FeedDetectedObject {
+  id: number;
+  category: string;
+  cropped_image_url?: string;
+  bbox?: FeedBBox;
+  matched_product: FeedMatchedProduct | null;
+}
+
+/** 피드 아이템 */
+export interface FeedItem {
+  id: number;
+  uploaded_image_url: string;
+  user: FeedUser;
+  created_at: string;
+  is_public: boolean;
+  analysis_status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
+  detected_objects: FeedDetectedObject[];
+}
+
+/** 피드 응답 */
+export interface FeedResponse {
+  items: FeedItem[];
+  next_cursor: string | null;
+}
+
+/** 공개/비공개 토글 요청 */
+export interface VisibilityToggleRequest {
+  is_public: boolean;
+}
+
+// ─────────────────────────────────────────────
 // 레거시 호환 타입 (기존 코드 호환용)
 // ─────────────────────────────────────────────
 
@@ -478,6 +545,14 @@ export type ChatResponseType =
   | 'general'
   | 'error';
 
+/** Bounding Box for detected object overlay */
+export interface ChatBBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
 /** 채팅 상품 정보 */
 export interface ChatProduct {
   index?: number;
@@ -488,6 +563,11 @@ export interface ChatProduct {
   image_url: string;
   product_url: string;
   sizes?: string[];
+  // Image analysis specific fields
+  category?: string;
+  confidence_score?: number;
+  detected_object_id?: number;
+  bbox?: ChatBBox;
 }
 
 /** 채팅 장바구니 아이템 */
@@ -545,6 +625,10 @@ export interface ChatResponseData {
 
   // ask_selection
   options?: ChatProduct[];
+
+  // image analysis
+  uploaded_image_url?: string;
+  uploaded_image_id?: number;
 }
 
 /** 채팅 응답 본문 */
