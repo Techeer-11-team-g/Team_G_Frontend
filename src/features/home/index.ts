@@ -4,3 +4,7 @@ export { SplashScreen } from './components/SplashScreen';
 export { ImageInputZone } from './components/ImageInputZone';
 export { HistoryArchive } from './components/HistoryArchive';
 export { AnalyzingState } from './components/AnalyzingState';
+export { LandingIntro } from './components/LandingIntro';
+export { HeroSection } from './components/HeroSection';
+export { HowItWorksSection } from './components/HowItWorksSection';
+export { FeaturesSection } from './components/FeaturesSection';

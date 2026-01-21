@@ -14,8 +14,10 @@ interface MagneticInputProps {
   magneticStrength?: number;
   showImageButton?: boolean;
   showVoiceButton?: boolean;
+  isVoiceListening?: boolean;
   disabled?: boolean;
   className?: string;
+  allowEmptySubmit?: boolean; // Allow submitting with empty text (e.g., when image is pending)
 }
 
 export function MagneticInput({
@@ -28,8 +30,10 @@ export function MagneticInput({
   magneticStrength = 0.15,
   showImageButton = true,
   showVoiceButton = false,
+  isVoiceListening = false,
   disabled = false,
   className,
+  allowEmptySubmit = false,
 }: MagneticInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -69,7 +73,7 @@ export function MagneticInput({
   }, [mouseX, mouseY]);
 
   const handleSubmit = () => {
-    if (value.trim() && !disabled) {
+    if ((value.trim() || allowEmptySubmit) && !disabled) {
       haptic('tap');
       onSubmit();
     }
@@ -245,20 +249,38 @@ export function MagneticInput({
             className={cn(
               'w-9 h-9 rounded-full relative overflow-hidden',
               'flex items-center justify-center',
-              'transition-all duration-300',
-              disabled && 'opacity-50 pointer-events-none'
+              'transition-all duration-300'
             )}
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: isVoiceListening
+                ? 'rgba(239, 68, 68, 0.3)'
+                : 'rgba(255,255,255,0.05)',
+              border: isVoiceListening
+                ? '1px solid rgba(239, 68, 68, 0.5)'
+                : '1px solid rgba(255,255,255,0.1)',
             }}
             whileHover={{
               scale: 1.1,
-              background: 'rgba(255,255,255,0.1)',
+              background: isVoiceListening
+                ? 'rgba(239, 68, 68, 0.4)'
+                : 'rgba(255,255,255,0.1)',
             }}
             whileTap={{ scale: 0.9 }}
+            animate={isVoiceListening ? { scale: [1, 1.1, 1] } : {}}
+            transition={isVoiceListening ? { duration: 1, repeat: Infinity } : {}}
           >
-            <Mic size={14} className="text-white/60" />
+            <Mic
+              size={14}
+              className={isVoiceListening ? 'text-red-400' : 'text-white/60'}
+            />
+            {/* Pulsing ring when listening */}
+            {isVoiceListening && (
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-red-400"
+                animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+            )}
           </motion.button>
         )}
 

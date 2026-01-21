@@ -35,7 +35,7 @@ export function SizeSelectorModal({
   const hasAvailableSizes = isStringArray
     ? sizes.length > 0
     : (sizes as ProductSize[]).some(
-        (s) => s.inventory > 0 && s.selected_product_id !== null
+        (s) => (s.inventory ?? 1) > 0 && s.selected_product_id !== null
       );
 
   return (

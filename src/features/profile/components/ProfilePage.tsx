@@ -196,11 +196,11 @@ export function ProfilePage() {
       setUserImageUrl(result.user_image_url);
       localStorage.setItem('user_full_body_photo', result.user_image_url);
       haptic('success');
-      toast.success('Full body photo uploaded');
+      toast.success('전신 사진이 업로드되었습니다');
     } catch (error) {
       console.error('Full body photo upload failed:', error);
       haptic('error');
-      toast.error('Upload failed');
+      toast.error('업로드 실패');
       setFullBodyPhoto(userImageUrl);
     } finally {
       setIsUploadingFullBody(false);
@@ -225,11 +225,11 @@ export function ProfilePage() {
           phone_number: editForm.phone,
         });
         haptic('success');
-        toast.success('Profile saved');
+        toast.success('프로필이 저장되었습니다');
       } catch (error) {
         console.error('Profile update failed:', error);
         haptic('error');
-        toast.error('Save failed');
+        toast.error('저장 실패');
       }
     }
 
@@ -249,8 +249,8 @@ export function ProfilePage() {
   };
 
   const menuItems = [
-    { icon: Package, label: 'Orders', description: 'View order history', path: '/orders' },
-    { icon: Settings, label: 'Settings', description: 'App preferences', path: '/settings' },
+    { icon: Package, label: '주문내역', description: '주문 기록 보기', path: '/orders' },
+    { icon: Settings, label: '설정', description: '앱 설정', path: '/settings' },
   ];
 
   return (
@@ -275,10 +275,10 @@ export function ProfilePage() {
               className="flex items-center gap-2 px-3 py-2 -ml-3"
             >
               <ArrowLeft size={16} strokeWidth={1.5} />
-              <span className="tracking-[0.2em] text-xs uppercase font-light">Back</span>
+              <span className="tracking-[0.2em] text-xs uppercase font-light">뒤로</span>
             </MagneticButton>
             <span className="text-[10px] tracking-[0.3em] uppercase text-white/30 font-light">
-              Profile
+              프로필
             </span>
           </div>
         </div>
@@ -347,7 +347,7 @@ export function ProfilePage() {
                 >
                   <h2 className="text-2xl font-extralight tracking-wider">{profile.name}</h2>
                   <p className="text-xs tracking-[0.2em] text-white/30 mt-2 uppercase">
-                    {profile.email || 'No email registered'}
+                    {profile.email || '이메일 미등록'}
                   </p>
                 </motion.div>
               ) : (
@@ -362,7 +362,7 @@ export function ProfilePage() {
                   {/* Name Input */}
                   <div className="space-y-2">
                     <label className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light">
-                      Name
+                      이름
                     </label>
                     <motion.div
                       animate={{
@@ -377,7 +377,7 @@ export function ProfilePage() {
                         onFocus={() => setFocusedField('name')}
                         onBlur={() => setFocusedField(null)}
                         className="w-full bg-transparent py-3 text-base font-light tracking-wide outline-none placeholder:text-white/20"
-                        placeholder="Enter name"
+                        placeholder="이름 입력"
                       />
                     </motion.div>
                   </div>
@@ -385,7 +385,7 @@ export function ProfilePage() {
                   {/* Email Input */}
                   <div className="space-y-2">
                     <label className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light">
-                      Email
+                      이메일
                     </label>
                     <motion.div
                       animate={{
@@ -400,7 +400,7 @@ export function ProfilePage() {
                         onFocus={() => setFocusedField('email')}
                         onBlur={() => setFocusedField(null)}
                         className="w-full bg-transparent py-3 text-base font-light tracking-wide outline-none placeholder:text-white/20"
-                        placeholder="Enter email"
+                        placeholder="이메일 입력"
                       />
                     </motion.div>
                   </div>
@@ -408,7 +408,7 @@ export function ProfilePage() {
                   {/* Phone Input */}
                   <div className="space-y-2">
                     <label className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light">
-                      Phone
+                      전화번호
                     </label>
                     <motion.div
                       animate={{
@@ -423,7 +423,7 @@ export function ProfilePage() {
                         onFocus={() => setFocusedField('phone')}
                         onBlur={() => setFocusedField(null)}
                         className="w-full bg-transparent py-3 text-base font-light tracking-wide outline-none placeholder:text-white/20"
-                        placeholder="Enter phone number"
+                        placeholder="전화번호 입력"
                       />
                     </motion.div>
                   </div>
@@ -431,7 +431,7 @@ export function ProfilePage() {
                   {/* Address Input */}
                   <div className="space-y-2">
                     <label className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light">
-                      Address
+                      주소
                     </label>
                     <motion.button
                       type="button"
@@ -446,7 +446,7 @@ export function ProfilePage() {
                           editForm.address ? 'text-white' : 'text-white/20'
                         )}
                       >
-                        {editForm.address || 'Search address'}
+                        {editForm.address || '주소 검색'}
                       </span>
                     </motion.button>
                     {editForm.address && (
@@ -462,7 +462,7 @@ export function ProfilePage() {
                             setEditForm((prev) => ({ ...prev, addressDetail: e.target.value }))
                           }
                           className="w-full bg-transparent py-3 text-base font-light tracking-wide outline-none placeholder:text-white/20"
-                          placeholder="Detail address"
+                          placeholder="상세 주소"
                         />
                       </motion.div>
                     )}
@@ -486,7 +486,7 @@ export function ProfilePage() {
                       onClick={() => setIsEditing(true)}
                       className="w-full py-4 px-6"
                     >
-                      <span className="tracking-[0.15em] uppercase text-xs">Edit Profile</span>
+                      <span className="tracking-[0.15em] uppercase text-xs">프로필 수정</span>
                     </MagneticButton>
                   </motion.div>
                 ) : (
@@ -504,14 +504,14 @@ export function ProfilePage() {
                       }}
                       className="flex-1 py-4 px-6"
                     >
-                      <span className="tracking-[0.15em] uppercase text-xs">Cancel</span>
+                      <span className="tracking-[0.15em] uppercase text-xs">취소</span>
                     </MagneticButton>
                     <MagneticButton
                       onClick={handleSave}
                       variant="primary"
                       className="flex-1 py-4 px-6"
                     >
-                      <span className="tracking-[0.15em] uppercase text-xs">Save</span>
+                      <span className="tracking-[0.15em] uppercase text-xs">저장</span>
                     </MagneticButton>
                   </motion.div>
                 )}
@@ -530,7 +530,7 @@ export function ProfilePage() {
                 className="space-y-4"
               >
                 <p className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light">
-                  Virtual Try-On Photo
+                  가상 피팅 사진
                 </p>
                 <div className="flex justify-center">
                   {fullBodyPhoto ? (
@@ -605,8 +605,8 @@ export function ProfilePage() {
                             <Upload size={18} strokeWidth={1.5} className="text-white/30" />
                           </div>
                           <div className="text-center space-y-1">
-                            <p className="text-xs text-white/40 tracking-wider">Upload Photo</p>
-                            <p className="text-[9px] text-white/20 tracking-wider">For virtual fitting</p>
+                            <p className="text-xs text-white/40 tracking-wider">사진 업로드</p>
+                            <p className="text-[9px] text-white/20 tracking-wider">가상 피팅용</p>
                           </div>
                         </>
                       )}
@@ -629,20 +629,20 @@ export function ProfilePage() {
               >
                 <GlassCard className="p-5" delay={0.1}>
                   <p className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light mb-2">
-                    Contact
+                    연락처
                   </p>
                   <p className="text-sm font-light tracking-wide">
-                    {profile.phone || 'No phone registered'}
+                    {profile.phone || '전화번호 미등록'}
                   </p>
                 </GlassCard>
                 <GlassCard className="p-5" delay={0.15}>
                   <p className="text-[9px] uppercase tracking-[0.3em] text-white/30 font-light mb-2">
-                    Address
+                    주소
                   </p>
                   <p className="text-sm font-light tracking-wide">
                     {profile.address
                       ? `${profile.address}${profile.addressDetail ? ` ${profile.addressDetail}` : ''}`
-                      : 'No address registered'}
+                      : '주소 미등록'}
                   </p>
                 </GlassCard>
               </motion.div>
@@ -698,7 +698,7 @@ export function ProfilePage() {
                 >
                   <LogOut size={14} strokeWidth={1.5} className="text-white/30" />
                   <span className="text-[10px] uppercase tracking-[0.25em] text-white/30 font-light">
-                    Sign Out
+                    로그아웃
                   </span>
                 </MagneticButton>
               </motion.div>
