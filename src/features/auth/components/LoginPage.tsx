@@ -155,7 +155,7 @@ export function LoginPage() {
 
     try {
       const response = await authApi.googleLogin({
-        credential: credentialResponse.credential,
+        id_token: credentialResponse.credential,
       });
 
       login(

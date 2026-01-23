@@ -41,7 +41,7 @@ export interface LoginResponse {
 
 /** Google 로그인 요청 */
 export interface GoogleLoginRequest {
-  credential: string;
+  id_token: string;
 }
 
 /** Google 로그인 응답 */
