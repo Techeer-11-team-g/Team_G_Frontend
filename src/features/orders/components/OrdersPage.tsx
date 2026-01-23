@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Package, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { useOrders } from '../hooks/useOrders';
 import { haptic, easings, springs, containerVariants, itemVariants } from '@/motion';
+import { MainHeader } from '@/components/layout';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -96,7 +97,7 @@ function OrderCard({
                 {formatDate(order.created_at)}
               </p>
               <p className="text-[11px] tracking-wide text-white/50 font-light">
-                #{String(order.order_id).padStart(8, '0')}
+                주문번호 {order.order_id}
               </p>
             </div>
             <StatusBadge />
@@ -295,9 +296,12 @@ export function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      {/* Glass Header */}
+      {/* Main Header */}
+      <MainHeader />
+
+      {/* Sub Header */}
       <motion.header
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-5 border-b border-white/[0.05] bg-black/60 backdrop-blur-2xl"
+        className="fixed top-14 left-0 right-0 z-40 px-6 py-4 border-b border-white/[0.05] bg-black/60 backdrop-blur-2xl"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: easings.smooth }}
@@ -306,7 +310,7 @@ export function OrdersPage() {
           <motion.button
             onClick={() => {
               haptic('tap');
-              navigate('/profile');
+              navigate(-1);
             }}
             className="flex items-center gap-2 text-white/60 hover:text-white/90 transition-colors"
             whileHover={{ x: -2 }}
@@ -317,16 +321,21 @@ export function OrdersPage() {
             <span className="text-xs font-light tracking-[0.15em] uppercase">Back</span>
           </motion.button>
 
-          <span className="text-[11px] font-light tracking-[0.2em] uppercase text-white/30">
-            Orders
-          </span>
-
-          {/* Placeholder for balance */}
-          <div className="w-16" />
+          <motion.div
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.06]"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, ...springs.gentle }}
+          >
+            <Package size={12} className="text-white/40" />
+            <span className="text-[11px] tracking-[0.15em] uppercase text-white/50 font-light">
+              {orders.length} orders
+            </span>
+          </motion.div>
         </div>
       </motion.header>
 
-      <main className="pt-28 pb-16 px-6">
+      <main className="pt-36 pb-16 px-6">
         <div className="max-w-lg mx-auto">
           {/* Page Title */}
           <motion.div

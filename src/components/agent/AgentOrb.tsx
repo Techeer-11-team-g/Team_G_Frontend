@@ -6,7 +6,7 @@ export type AgentState = 'idle' | 'thinking' | 'searching' | 'presenting' | 'suc
 
 interface AgentOrbProps {
   state?: AgentState;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
   onClick?: () => void;
   showPulse?: boolean;
@@ -22,6 +22,7 @@ const stateConfigs = {
 };
 
 const sizeMap = {
+  xs: 28,
   sm: 56,
   md: 72,
   lg: 96,
@@ -54,13 +55,16 @@ export function AgentOrb({
   const startTimeRef = useRef<number>(Date.now());
 
   // State for particle positions
-  const [particlePositions, setParticlePositions] = useState<{ x: number; y: number; scale: number; opacity: number }[]>([]);
+  const [particlePositions, setParticlePositions] = useState<
+    { x: number; y: number; scale: number; opacity: number }[]
+  >([]);
 
   // Generate particles configuration (static)
+  // Hue range: 60-300 to avoid red tones (0-60 and 300-360)
   const particles = useMemo<Particle[]>(() => {
     return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
       id: i,
-      hue: (i / PARTICLE_COUNT) * 360,
+      hue: 60 + (i / PARTICLE_COUNT) * 240, // 60 (yellow) to 300 (purple), skipping red
       size: 4 + (i % 3),
       orbitRadius: orbSize * 0.65 + (i % 2) * 5,
       orbitOffset: (i / PARTICLE_COUNT) * Math.PI * 2,
@@ -138,12 +142,7 @@ export function AgentOrb({
       rotate: [0, 180, 360],
     },
     searching: {
-      borderRadius: [
-        '50% 50% 50% 50%',
-        '42% 58% 42% 58%',
-        '58% 42% 58% 42%',
-        '50% 50% 50% 50%',
-      ],
+      borderRadius: ['50% 50% 50% 50%', '42% 58% 42% 58%', '58% 42% 58% 42%', '50% 50% 50% 50%'],
       scale: [1, 1.08, 0.95, 1],
     },
     presenting: {
@@ -254,7 +253,7 @@ export function AgentOrb({
 
       {/* Main chrome orb container */}
       <motion.div
-        className="relative w-full h-full overflow-hidden"
+        className="relative h-full w-full overflow-hidden"
         style={{
           background: `
             linear-gradient(135deg,
@@ -283,7 +282,7 @@ export function AgentOrb({
       >
         {/* Iridescent color overlay - animated rotation */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="pointer-events-none absolute inset-0"
           style={{
             background: `conic-gradient(from 0deg at 50% 50%,
               rgba(255, 100, 150, 0.4) 0deg,
@@ -308,7 +307,7 @@ export function AgentOrb({
 
         {/* Secondary iridescent layer - counter rotation */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="pointer-events-none absolute inset-0"
           style={{
             background: `conic-gradient(from 180deg at 50% 50%,
               rgba(100, 200, 255, 0.3) 0deg,
@@ -329,7 +328,7 @@ export function AgentOrb({
 
         {/* Chrome highlight - top left */}
         <div
-          className="absolute pointer-events-none"
+          className="pointer-events-none absolute"
           style={{
             top: '5%',
             left: '10%',
@@ -350,7 +349,7 @@ export function AgentOrb({
 
         {/* Secondary chrome highlight */}
         <div
-          className="absolute pointer-events-none"
+          className="pointer-events-none absolute"
           style={{
             top: '12%',
             left: '55%',
@@ -370,7 +369,7 @@ export function AgentOrb({
 
         {/* Moving prismatic shine */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="pointer-events-none absolute inset-0"
           animate={{
             background: [
               `linear-gradient(110deg,
@@ -402,7 +401,7 @@ export function AgentOrb({
 
         {/* Depth gradient - bottom */}
         <div
-          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          className="pointer-events-none absolute bottom-0 left-0 right-0"
           style={{
             height: '50%',
             background: `linear-gradient(to top,
@@ -416,7 +415,7 @@ export function AgentOrb({
 
         {/* Inner glow sphere */}
         <motion.div
-          className="absolute pointer-events-none rounded-full"
+          className="pointer-events-none absolute rounded-full"
           style={{
             top: '20%',
             left: '20%',
@@ -448,7 +447,7 @@ export function AgentOrb({
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             >
               <motion.div
-                className="w-3 h-3 rounded-full"
+                className="h-3 w-3 rounded-full"
                 style={{
                   background: `radial-gradient(circle,
                     rgba(255, 255, 255, 1) 0%,
@@ -497,7 +496,7 @@ export function AgentOrb({
                 }}
               />
               <motion.div
-                className="w-3 h-3 rounded-full"
+                className="h-3 w-3 rounded-full"
                 style={{
                   background: 'rgba(255, 255, 255, 0.95)',
                   boxShadow: '0 0 15px rgba(255, 255, 255, 0.8)',
@@ -520,7 +519,8 @@ export function AgentOrb({
                   left: '50%',
                   top: '50%',
                   marginLeft: -orbSize * 0.25,
-                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
+                  background:
+                    'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
                 }}
                 animate={{
                   rotate: [0, 360],
@@ -532,7 +532,7 @@ export function AgentOrb({
                 }}
               />
               <motion.div
-                className="w-3 h-3 rounded-full"
+                className="h-3 w-3 rounded-full"
                 style={{
                   background: 'rgba(255, 255, 255, 0.95)',
                   boxShadow: '0 0 15px rgba(255, 255, 255, 0.8)',
@@ -578,7 +578,8 @@ export function AgentOrb({
               className="font-bold"
               style={{
                 fontSize: orbSize * 0.35,
-                background: 'linear-gradient(135deg, rgba(255, 150, 150, 1), rgba(255, 100, 100, 1))',
+                background:
+                  'linear-gradient(135deg, rgba(255, 150, 150, 1), rgba(255, 100, 100, 1))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -626,7 +627,7 @@ export function AgentOrb({
                 />
               ))}
               <motion.div
-                className="w-4 h-4 rounded-full"
+                className="h-4 w-4 rounded-full"
                 style={{
                   background: `radial-gradient(circle,
                     rgba(255, 255, 255, 1) 0%,
@@ -648,7 +649,7 @@ export function AgentOrb({
 
         {/* Edge rim light */}
         <div
-          className="absolute inset-0 pointer-events-none rounded-[inherit]"
+          className="pointer-events-none absolute inset-0 rounded-[inherit]"
           style={{
             background: `
               linear-gradient(135deg,
@@ -666,7 +667,7 @@ export function AgentOrb({
       {/* Orbiting rainbow particles - positioned with calculated x/y */}
       {showParticles && (
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="pointer-events-none absolute inset-0"
           style={{
             // Center the particle container
             display: 'flex',
@@ -699,9 +700,7 @@ export function AgentOrb({
       )}
 
       {/* Secondary orbit layer - smaller, faster particles */}
-      {showParticles && state === 'thinking' && (
-        <ThinkingParticles orbSize={orbSize} />
-      )}
+      {showParticles && state === 'thinking' && <ThinkingParticles orbSize={orbSize} />}
 
       {/* Ambient reflection on surface below */}
       {showPulse && (
@@ -739,10 +738,11 @@ function ThinkingParticles({ orbSize }: { orbSize: number }) {
   const animationRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(Date.now());
 
+  // Hue range: 60-300 to avoid red tones
   const innerParticles = useMemo(() => {
     return Array.from({ length: 6 }, (_, i) => ({
       id: i,
-      hue: (i / 6) * 360 + 30, // Offset from main particles
+      hue: 60 + (i / 6) * 240, // 60 (yellow) to 300 (purple), skipping red
       size: 3,
       orbitRadius: orbSize * 0.35,
       orbitOffset: (i / 6) * Math.PI * 2,
@@ -776,7 +776,7 @@ function ThinkingParticles({ orbSize }: { orbSize: number }) {
 
   return (
     <div
-      className="absolute inset-0 pointer-events-none"
+      className="pointer-events-none absolute inset-0"
       style={{
         display: 'flex',
         alignItems: 'center',

@@ -29,7 +29,9 @@
       "Bash(curl:*)",
       "WebFetch(domain:www.osmo.supply)",
       "Bash(echo:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(npx eslint:*)",
+      "Bash(wc:*)"
     ]
   }
 }

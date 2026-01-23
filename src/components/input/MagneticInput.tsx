@@ -18,6 +18,7 @@ interface MagneticInputProps {
   disabled?: boolean;
   className?: string;
   allowEmptySubmit?: boolean; // Allow submitting with empty text (e.g., when image is pending)
+  minimal?: boolean; // Disable glow/shine effects for cleaner look
 }
 
 export function MagneticInput({
@@ -34,6 +35,7 @@ export function MagneticInput({
   disabled = false,
   className,
   allowEmptySubmit = false,
+  minimal = false,
 }: MagneticInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -107,17 +109,19 @@ export function MagneticInput({
       style={{ x, y }}
     >
       {/* Monochrome glow effect */}
-      <motion.div
-        className="absolute -inset-3 rounded-full blur-2xl pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 70%)`,
-          opacity: isFocused ? 0.6 : isHovered ? glowOpacity : 0.2,
-        }}
-        animate={{
-          scale: isFocused ? 1.1 : isHovered ? 1.05 : 1,
-        }}
-        transition={springs.gentle}
-      />
+      {!minimal && (
+        <motion.div
+          className="absolute -inset-3 rounded-full blur-2xl pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 70%)`,
+            opacity: isFocused ? 0.6 : isHovered ? glowOpacity : 0.2,
+          }}
+          animate={{
+            scale: isFocused ? 1.1 : isHovered ? 1.05 : 1,
+          }}
+          transition={springs.gentle}
+        />
+      )}
 
       {/* Liquid glass container */}
       <motion.div
@@ -156,32 +160,36 @@ export function MagneticInput({
         transition={springs.snappy}
       >
         {/* Glass reflection */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
-            borderRadius: 'inherit',
-          }}
-        />
+        {!minimal && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
+              borderRadius: 'inherit',
+            }}
+          />
+        )}
 
         {/* Liquid shine animation */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{ borderRadius: 'inherit' }}
-          animate={{
-            background: [
-              'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
-              'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
-              'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
-            ],
-            backgroundPosition: ['-200% 0', '200% 0', '-200% 0'],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
+        {!minimal && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{ borderRadius: 'inherit' }}
+            animate={{
+              background: [
+                'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
+                'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
+                'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
+              ],
+              backgroundPosition: ['-200% 0', '200% 0', '-200% 0'],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        )}
 
         {/* Image upload button - monochrome glass style */}
         {showImageButton && (

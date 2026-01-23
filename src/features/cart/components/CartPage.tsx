@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store';
 import { cn } from '@/utils/cn';
 import { haptic, easings, springs, durations, presets } from '@/motion';
 import { glassTw } from '@/styles/liquid-glass';
+import { MainHeader } from '@/components/layout';
 
 // Cart item type from hook
 type CartItemType = ReturnType<typeof useCart>['items'][number];
@@ -258,10 +259,13 @@ export function CartPage() {
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black to-transparent" />
       </div>
 
-      {/* Header - Glassmorphism */}
+      {/* Main Header */}
+      <MainHeader />
+
+      {/* Sub Header - Glassmorphism */}
       <motion.header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 px-6 py-5',
+          'fixed top-14 left-0 right-0 z-40 px-6 py-4',
           'bg-black/60 backdrop-blur-xl border-b border-white/[0.06]'
         )}
         initial={{ y: -60, opacity: 0 }}
@@ -272,7 +276,7 @@ export function CartPage() {
           <motion.button
             onClick={() => {
               haptic('tap');
-              navigate('/home');
+              navigate(-1);
             }}
             className={cn(
               'flex items-center gap-2 px-3 py-2 -ml-3 rounded-full',
@@ -304,7 +308,7 @@ export function CartPage() {
         </div>
       </motion.header>
 
-      <main className="relative pt-24 pb-36 px-6">
+      <main className="relative pt-32 pb-36 px-6">
         <motion.div
           className="max-w-md mx-auto"
           initial={{ opacity: 0 }}

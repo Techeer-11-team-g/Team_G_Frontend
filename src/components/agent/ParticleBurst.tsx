@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { springs, easings } from '@/motion';
 
@@ -29,7 +29,7 @@ const DEFAULT_COLORS = [
   'rgba(245, 158, 11, 1)', // Amber
 ];
 
-export function ParticleBurst({
+export const ParticleBurst = memo(function ParticleBurst({
   isActive,
   particleCount = 24,
   duration = 1,
@@ -136,7 +136,7 @@ export function ParticleBurst({
       )}
     </div>
   );
-}
+});
 
 // Sparkle trail effect for product cards emerging
 interface SparkleTrailProps {
@@ -149,7 +149,7 @@ interface SparkleTrailProps {
   onComplete?: () => void;
 }
 
-export function SparkleTrail({
+export const SparkleTrail = memo(function SparkleTrail({
   isActive,
   startX,
   startY,
@@ -196,11 +196,11 @@ export function SparkleTrail({
           return (
             <motion.div
               key={sparkle.id}
-              className="absolute w-2 h-2 rounded-full bg-accent"
+              className="absolute w-2 h-2 rounded-full bg-white/80"
               style={{
                 left: x,
                 top: y,
-                boxShadow: '0 0 8px rgba(139, 92, 246, 0.8)',
+                boxShadow: '0 0 8px rgba(255, 255, 255, 0.6)',
               }}
               initial={{ scale: 0, opacity: 0 }}
               animate={{
@@ -217,7 +217,7 @@ export function SparkleTrail({
       </AnimatePresence>
     </div>
   );
-}
+});
 
 // Product card emergence animation wrapper
 interface ProductEmergenceProps {
@@ -228,7 +228,7 @@ interface ProductEmergenceProps {
   isVisible: boolean;
 }
 
-export function ProductEmergence({
+export const ProductEmergence = memo(function ProductEmergence({
   children,
   index,
   originX = 0,
@@ -277,4 +277,4 @@ export function ProductEmergence({
       {children}
     </motion.div>
   );
-}
+});

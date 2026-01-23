@@ -20,6 +20,7 @@ import { useDaumPostcode } from '@/hooks';
 import { userImagesApi, usersApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { haptic, easings, springs, containerVariants, itemVariants, durations } from '@/motion';
+import { MainHeader } from '@/components/layout';
 
 interface UserProfile {
   name: string;
@@ -260,17 +261,20 @@ export function ProfilePage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-white/[0.02] rounded-full blur-[120px]" />
       </div>
 
-      {/* Header - Glassmorphism */}
+      {/* Main Header */}
+      <MainHeader />
+
+      {/* Sub Header - Glassmorphism */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: durations.slow, ease: easings.smooth }}
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-14 left-0 right-0 z-40"
       >
         <div className="backdrop-blur-xl bg-black/50 border-b border-white/[0.06]">
-          <div className="px-6 py-5 flex items-center justify-between">
+          <div className="px-6 py-4 flex items-center justify-between">
             <MagneticButton
-              onClick={() => navigate('/home')}
+              onClick={() => navigate(-1)}
               variant="ghost"
               className="flex items-center gap-2 px-3 py-2 -ml-3"
             >
@@ -284,7 +288,7 @@ export function ProfilePage() {
         </div>
       </motion.header>
 
-      <main className="pt-28 pb-24 px-6">
+      <main className="pt-36 pb-24 px-6">
         <motion.div
           variants={containerVariants}
           initial="hidden"

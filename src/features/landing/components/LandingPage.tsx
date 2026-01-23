@@ -193,31 +193,73 @@ function VideoHeroSection({ isLoaded }: { isLoaded: boolean }) {
 // =============================================
 function HowItWorksSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animationStep, setAnimationStep] = useState(0);
 
   return (
     <section ref={sectionRef} className="relative overflow-hidden">
-      {/* Section intro - centered text */}
-      <div className="relative flex h-[50vh] items-center justify-center">
+      {/* Section intro - Animated text sequence */}
+      <div className="relative flex min-h-[60vh] items-center justify-center">
         <motion.div
           className="text-center"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          onViewportEnter={() => {
+            if (hasAnimated) return;
+            setHasAnimated(true);
+            // Start animation sequence
+            const timings = [300, 1200, 2200];
+            timings.forEach((time, index) => {
+              setTimeout(() => setAnimationStep(index + 1), time);
+            });
+          }}
         >
-          <h2 className="mb-4 text-[clamp(2rem,5vw,4rem)] font-light tracking-[-0.02em] text-white">
-            5단계로 당신만의 스타일을
-          </h2>
-          <h2 className="text-[clamp(2rem,5vw,4rem)] font-light tracking-[-0.02em] text-white">
-            찾아보세요
-          </h2>
+          {/* Step 1: for your sense */}
           <motion.p
-            className="mt-6 text-base text-white/40 md:text-lg"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          ></motion.p>
+            className="text-lg tracking-[0.2em] text-white/50 mb-4 lowercase"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{
+              opacity: animationStep >= 1 ? 1 : 0,
+              y: animationStep >= 1 ? 0 : 20,
+            }}
+            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          >
+            for your sense
+          </motion.p>
+
+          {/* Step 2: DRESSENSE - Logo reveal */}
+          <motion.h1
+            className="text-[clamp(3rem,15vw,12rem)] font-black tracking-[-0.03em] text-white"
+            style={{
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}
+            initial={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
+            animate={{
+              opacity: animationStep >= 2 ? 1 : 0,
+              scale: animationStep >= 2 ? 1 : 0.8,
+              filter: animationStep >= 2 ? 'blur(0px)' : 'blur(10px)',
+            }}
+            transition={{
+              duration: 0.8,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          >
+            DRESSENSE
+          </motion.h1>
+
+          {/* Step 3: 5단계로 당신만의 스타일을 */}
+          <motion.p
+            className="mt-12 text-[clamp(1.2rem,3vw,2rem)] font-light tracking-wide text-white/60"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{
+              opacity: animationStep >= 3 ? 1 : 0,
+              y: animationStep >= 3 ? 0 : 20,
+            }}
+            transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+          >
+            5단계로 당신만의 스타일을 찾아보세요
+          </motion.p>
         </motion.div>
       </div>
 
@@ -293,7 +335,7 @@ function EditorialStepItem({ step, index }: { step: (typeof WORKFLOW_STEPS)[0]; 
 
           {/* Title */}
           <motion.h3
-            className="mb-6 text-[clamp(2.5rem,7vw,5rem)] font-extralight leading-[1.1] tracking-[-0.02em]"
+            className="mb-6 text-[clamp(2.5rem,7vw,5rem)] font-medium leading-[1.1] tracking-[-0.02em]"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -301,12 +343,12 @@ function EditorialStepItem({ step, index }: { step: (typeof WORKFLOW_STEPS)[0]; 
           >
             <span className="text-white">{step.titleKr}</span>
             <br />
-            <span className="text-white/30">{step.title}</span>
+            <span className="font-light text-white/30">{step.title}</span>
           </motion.h3>
 
           {/* Description */}
           <motion.p
-            className="max-w-lg text-base leading-relaxed text-white/40 md:text-lg"
+            className="max-w-lg text-base font-medium leading-relaxed text-white/50 md:text-lg"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

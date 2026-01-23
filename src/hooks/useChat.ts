@@ -51,7 +51,20 @@ const getSavedChatState = (): { messages: ChatMessage[]; contentPanelData: Conte
   try {
     const saved = sessionStorage.getItem(CHAT_STATE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+
+      // Filter out blob URLs (they don't persist across sessions)
+      if (parsed.messages) {
+        parsed.messages = parsed.messages.map((msg: ChatMessage) => ({
+          ...msg,
+          imagePreview: msg.imagePreview?.startsWith('blob:') ? undefined : msg.imagePreview,
+        }));
+      }
+      if (parsed.contentPanelData?.uploadedImageUrl?.startsWith('blob:')) {
+        parsed.contentPanelData.uploadedImageUrl = undefined;
+      }
+
+      return parsed;
     }
   } catch (e) {
     console.error('Failed to parse saved chat state:', e);
@@ -169,7 +182,8 @@ export function useChat() {
           setContentPanelData({
             view: 'imageAnalysis',
             products: data.products,
-            uploadedImageUrl: uploadedImageUrl || data.uploaded_image_url,
+            // Prefer server URL over blob URL (blob URLs don't persist across sessions)
+            uploadedImageUrl: data.uploaded_image_url || uploadedImageUrl,
             uploadedImageId: data.uploaded_image_id,
             isImageAnalysis: true,
           });

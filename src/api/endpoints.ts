@@ -263,10 +263,11 @@ export const usersApi = {
 
 export const chatApi = {
   /** 채팅 메시지 전송 (텍스트 전용) */
-  send: async (message: string, sessionId?: string): Promise<ChatResponse> => {
+  send: async (message: string, sessionId?: string, analysisId?: number): Promise<ChatResponse> => {
     const { data } = await apiClient.post('/api/v1/chat', {
       message,
       session_id: sessionId,
+      ...(analysisId && { analysis_id: analysisId }),
     });
     return data;
   },
@@ -275,13 +276,17 @@ export const chatApi = {
   sendWithImage: async (
     message: string,
     image: File,
-    sessionId?: string
+    sessionId?: string,
+    analysisId?: number
   ): Promise<ChatResponse> => {
     const formData = new FormData();
     formData.append('message', message);
     formData.append('image', image);
     if (sessionId) {
       formData.append('session_id', sessionId);
+    }
+    if (analysisId) {
+      formData.append('analysis_id', analysisId.toString());
     }
     const { data } = await apiClient.post('/api/v1/chat', formData, {
       headers: { 'Content-Type': undefined },
@@ -313,15 +318,23 @@ export const chatApi = {
 
 import type {
   FeedResponse,
+  StylesResponse,
   VisibilityToggleRequest,
 } from '@/types/api';
 
 export const feedApi = {
-  /** 공개 피드 조회 */
+  /** 스타일 목록 조회 */
+  getStyles: async (): Promise<StylesResponse> => {
+    const { data } = await apiClient.get('/api/v1/feed/styles');
+    return data;
+  },
+
+  /** 공개 피드 조회 (스타일 필터 지원) */
   getPublicFeed: async (params?: {
     limit?: number;
     cursor?: string;
     category?: string;
+    style?: string;
   }): Promise<FeedResponse> => {
     const { data } = await apiClient.get('/api/v1/feed', { params });
     return data;

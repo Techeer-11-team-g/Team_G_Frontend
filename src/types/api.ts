@@ -454,6 +454,9 @@ export interface FeedItem {
   created_at: string;
   is_public: boolean;
   analysis_status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
+  analysis_id?: number;
+  style_tag1?: string;
+  style_tag2?: string;
   detected_objects: FeedDetectedObject[];
 }
 
@@ -461,6 +464,17 @@ export interface FeedItem {
 export interface FeedResponse {
   items: FeedItem[];
   next_cursor: string | null;
+}
+
+/** 스타일 옵션 */
+export interface StyleOption {
+  value: string;
+  label: string;
+}
+
+/** 스타일 목록 응답 */
+export interface StylesResponse {
+  styles: StyleOption[];
 }
 
 /** 공개/비공개 토글 요청 */

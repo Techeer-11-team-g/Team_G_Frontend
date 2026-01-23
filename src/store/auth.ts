@@ -30,13 +30,16 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user) => set({ user }),
 
-      login: (user, access, refresh) =>
+      login: (user, access, refresh) => {
+        // Clear home visited flag to show intro animation on login
+        sessionStorage.removeItem('dressense_home_visited');
         set({
           user,
           accessToken: access,
           refreshToken: refresh,
           isAuthenticated: true,
-        }),
+        });
+      },
 
       logout: () =>
         set({
