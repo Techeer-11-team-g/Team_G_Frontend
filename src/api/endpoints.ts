@@ -5,6 +5,8 @@ import type {
   RegisterResponse,
   LoginRequest,
   LoginResponse,
+  GoogleLoginRequest,
+  GoogleLoginResponse,
   RefreshRequest,
   RefreshResponse,
   // 이미지 업로드
@@ -57,6 +59,12 @@ export const authApi = {
   /** 로그인 */
   login: async (request: LoginRequest): Promise<LoginResponse> => {
     const { data } = await apiClient.post('/api/v1/auth/login', request);
+    return data;
+  },
+
+  /** Google 로그인 */
+  googleLogin: async (request: GoogleLoginRequest): Promise<GoogleLoginResponse> => {
+    const { data } = await apiClient.post('/api/v1/auth/google', request);
     return data;
   },
 

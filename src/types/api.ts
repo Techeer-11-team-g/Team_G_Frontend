@@ -39,6 +39,23 @@ export interface LoginResponse {
   access: string;
 }
 
+/** Google 로그인 요청 */
+export interface GoogleLoginRequest {
+  credential: string;
+}
+
+/** Google 로그인 응답 */
+export interface GoogleLoginResponse {
+  access: string;
+  refresh: string;
+  user: {
+    user_id: number;
+    username: string;
+    email: string;
+  };
+  is_new_user?: boolean;
+}
+
 /** 토큰 갱신 요청 */
 export interface RefreshRequest {
   refresh: string;

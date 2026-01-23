@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { toast } from 'sonner';
 import { authApi, usersApi } from '@/api';
 import { useAuthStore, useUserStore } from '@/store';
@@ -137,6 +138,51 @@ export function LoginPage() {
     } catch (error: any) {
       haptic('error');
       const message = error.response?.data?.detail || 'Login failed';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      toast.error('Google 로그인에 실패했습니다');
+      return;
+    }
+
+    setIsLoading(true);
+    haptic('tap');
+
+    try {
+      const response = await authApi.googleLogin({
+        credential: credentialResponse.credential,
+      });
+
+      login(
+        { user_id: response.user.user_id, username: response.user.username, email: response.user.email },
+        response.access,
+        response.refresh
+      );
+
+      try {
+        const userProfile = await usersApi.getProfile();
+        setUser(userProfile);
+      } catch {
+        console.log('Profile fetch failed, but login succeeded');
+      }
+
+      haptic('success');
+      toast.success('Google 로그인 성공');
+
+      // 신규 사용자면 온보딩으로, 기존 사용자면 홈으로
+      if (response.is_new_user) {
+        navigate('/onboarding/step1');
+      } else {
+        navigate('/home');
+      }
+    } catch (error: any) {
+      haptic('error');
+      const message = error.response?.data?.detail || 'Google 로그인에 실패했습니다';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -330,6 +376,41 @@ export function LoginPage() {
                 )}
               </motion.button>
             </motion.div>
+
+            {/* Divider */}
+            <motion.div
+              className="flex items-center gap-4 pt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+            >
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent to-white/10" />
+              <span className="text-[11px] tracking-[0.15em] uppercase text-white/30 font-light">or</span>
+              <div className="flex-1 h-px bg-gradient-to-l from-transparent to-white/10" />
+            </motion.div>
+
+            {/* Google Login */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1 }}
+              className="pt-4"
+            >
+              <div className="flex justify-center [&>div]:w-full [&>div>div]:w-full [&_iframe]:!w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() => {
+                    haptic('error');
+                    toast.error('Google 로그인에 실패했습니다');
+                  }}
+                  theme="filled_black"
+                  size="large"
+                  shape="pill"
+                  text="continue_with"
+                  width="100%"
+                />
+              </div>
+            </motion.div>
           </motion.form>
 
           {/* Sign Up Link */}
@@ -337,7 +418,7 @@ export function LoginPage() {
             className="mt-12 pt-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+            transition={{ delay: 1.1 }}
           >
             <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
             <p className="text-[13px] text-white/40 font-light tracking-wide text-center">
