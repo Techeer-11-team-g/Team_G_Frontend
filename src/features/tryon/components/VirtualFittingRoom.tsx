@@ -1,117 +1,346 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { User } from 'lucide-react';
 import { useTryOnMutation, useTryOnStatus, useTryOnResult } from '../hooks/useTryOn';
 import { FittingHeader } from './FittingHeader';
 import { FittingPreview } from './FittingPreview';
 import { ProductBrief } from './ProductBrief';
 import { FittingFooter } from './FittingFooter';
+import { useUserStore } from '@/store';
+import { AgentOrb } from '@/components/agent';
+import { cn } from '@/utils/cn';
+import { haptic, springs } from '@/motion';
 import type { ProductCandidate } from '@/types/api';
 
 interface VirtualFittingRoomProps {
   product: ProductCandidate;
-  userPhoto: string | null;
   onClose: () => void;
-  onSaveUserPhoto: (photo: string) => void;
-  onAddToCart: (product: ProductCandidate) => void;
+  onAddToCart: (selectedProductId: number) => void;
+  onBuyNow: (selectedProductId: number) => void;
 }
 
 export function VirtualFittingRoom({
   product,
-  userPhoto,
   onClose,
-  onSaveUserPhoto,
   onAddToCart,
+  onBuyNow,
 }: VirtualFittingRoomProps) {
+  const navigate = useNavigate();
+  const { userImageUrl } = useUserStore();
   const [viewMode, setViewMode] = useState<'before' | 'after'>('after');
-  const [jobId, setJobId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fittingImageId, setFittingImageId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // TryOn API hooks
   const tryOnMutation = useTryOnMutation();
-  const { data: statusData } = useTryOnStatus(jobId, !!jobId && tryOnMutation.isSuccess);
-  const { data: tryOnResult } = useTryOnResult(jobId, statusData?.status === 'done');
+  const { data: statusData } = useTryOnStatus(
+    fittingImageId,
+    !!fittingImageId && tryOnMutation.isSuccess
+  );
+  const { data: tryOnResult } = useTryOnResult(
+    fittingImageId,
+    statusData?.fitting_image_status === 'DONE'
+  );
 
   const isGenerating =
     tryOnMutation.isPending ||
-    (!!jobId && statusData?.status !== 'done' && statusData?.status !== 'error');
+    (!!fittingImageId &&
+      statusData?.fitting_image_status !== 'DONE' &&
+      statusData?.fitting_image_status !== 'FAILED');
 
-  const fittingResult = tryOnResult?.resultImage || null;
+  const fittingResult = tryOnResult?.fitting_image_url || null;
 
-  // 피팅 완료 시 after 모드로 전환
   useEffect(() => {
     if (fittingResult) {
       setViewMode('after');
+      haptic('success');
+      toast.success('Virtual fitting complete', {
+        description: 'Check out the result',
+      });
     }
   }, [fittingResult]);
 
+  useEffect(() => {
+    if (statusData?.fitting_image_status === 'FAILED') {
+      haptic('error');
+      toast.error('Fitting process failed');
+    }
+  }, [statusData?.fitting_image_status]);
+
   const handleStartFitting = async () => {
-    if (!userPhoto) return;
-    setJobId(null);
+    if (!userImageUrl) return;
+    setFittingImageId(null);
+    haptic('tap');
 
     try {
       const result = await tryOnMutation.mutateAsync({
-        userPhoto,
-        productId: product.source_url,
+        product_id: product.product_id || 0,
+        user_image_url: userImageUrl,
       });
-      setJobId(result.jobId);
+      setFittingImageId(result.fitting_image_id);
     } catch (err) {
       console.error('Fitting request failed:', err);
+      haptic('error');
+      toast.error('Failed to start fitting');
     }
   };
 
-  const statusMessage =
-    statusData?.status === 'processing' ? '원단을 체형에 재구성하고 있습니다' : '서버 연결 중';
+  const handleGoToProfile = () => {
+    haptic('tap');
+    onClose();
+    navigate('/profile');
+  };
 
-  const showStartButton = !fittingResult && !!userPhoto && !isGenerating;
+  const statusMessage =
+    statusData?.fitting_image_status === 'RUNNING'
+      ? 'Reconstructing fabric to your body shape'
+      : 'Connecting to server';
+
+  // No user photo state
+  if (!userImageUrl) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          className={cn(
+            'fixed inset-0 z-[600] flex flex-col',
+            // Dark background with subtle gradient
+            'bg-[#0a0a0a]',
+            'bg-gradient-to-b from-white/[0.02] via-transparent to-transparent'
+          )}
+          initial={{ opacity: 0, x: '100%' }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: '100%' }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        >
+          <FittingHeader onClose={onClose} />
+
+          <main className="flex-1 flex items-center justify-center p-6">
+            <motion.div
+              className="text-center space-y-8 max-w-sm"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, ...springs.gentle }}
+            >
+              {/* Icon Container */}
+              <motion.div
+                className={cn(
+                  'w-28 h-28 rounded-full mx-auto',
+                  'bg-white/[0.03] backdrop-blur-sm',
+                  'border border-white/[0.08]',
+                  'flex items-center justify-center',
+                  'shadow-[0_8px_32px_rgba(0,0,0,0.2)]'
+                )}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.4, ...springs.bouncy }}
+              >
+                <User size={44} className="text-white/20" />
+              </motion.div>
+
+              {/* Text */}
+              <div className="space-y-3">
+                <motion.h3
+                  className="text-xl font-light text-white/90 tracking-wide"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  Full Body Photo Required
+                </motion.h3>
+                <motion.p
+                  className="text-sm text-white/40 font-light leading-relaxed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  To use virtual try-on, please register a full body photo in your profile first.
+                </motion.p>
+              </div>
+
+              {/* CTA Button */}
+              <motion.button
+                onClick={handleGoToProfile}
+                className={cn(
+                  'px-8 py-4 rounded-xl',
+                  'bg-white text-black',
+                  'font-light text-sm tracking-wide',
+                  'shadow-[0_4px_24px_rgba(255,255,255,0.15)]',
+                  'hover:shadow-[0_6px_32px_rgba(255,255,255,0.2)]',
+                  'transition-all duration-300'
+                )}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, ...springs.gentle }}
+                whileTap={{ scale: 0.98 }}
+                whileHover={{ y: -2 }}
+              >
+                Go to Profile
+              </motion.button>
+            </motion.div>
+          </main>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  const showStartButton = !fittingResult && !isGenerating;
   const showRetryOptions = !!fittingResult;
 
   return (
-    <div className="fixed inset-0 z-[600] bg-background flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
-      <FittingHeader onClose={onClose} />
+    <AnimatePresence>
+      <motion.div
+        className={cn(
+          'fixed inset-0 z-[600] flex flex-col',
+          // Dark background with subtle gradient
+          'bg-[#0a0a0a]',
+          'bg-gradient-to-b from-white/[0.02] via-transparent to-transparent'
+        )}
+        initial={{ opacity: 0, x: '100%' }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      >
+        <FittingHeader onClose={onClose} />
 
-      <main className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-10">
-        <FittingPreview
-          userPhoto={userPhoto}
-          fittingResult={fittingResult}
-          viewMode={viewMode}
-          isGenerating={isGenerating}
-          statusMessage={statusMessage}
-          onUploadPhoto={onSaveUserPhoto}
-          onViewModeChange={setViewMode}
-        />
+        <main className="flex-1 overflow-y-auto no-scrollbar">
+          <div className="p-6 space-y-8">
+            {/* Agent Status Indicator */}
+            <AnimatePresence>
+              {isGenerating && (
+                <motion.div
+                  className={cn(
+                    'flex items-center justify-center gap-4 py-3 px-5 mx-auto',
+                    'rounded-full w-fit',
+                    // Glassmorphism pill
+                    'bg-white/[0.03] backdrop-blur-xl',
+                    'border border-white/[0.08]',
+                    'shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+                  )}
+                  initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                  transition={springs.snappy}
+                >
+                  <AgentOrb state="thinking" size="sm" showPulse={false} />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-mono text-white/40 tracking-[0.15em] uppercase">
+                      Fitting Agent
+                    </span>
+                    <motion.span
+                      className="text-xs text-white/70 font-light"
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      Processing your request
+                    </motion.span>
+                  </div>
+                  <motion.div
+                    className="flex gap-1"
+                    animate={{ opacity: [0.3, 0.8, 0.3] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1 h-1 rounded-full bg-white/60"
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{
+                          duration: 0.6,
+                          repeat: Infinity,
+                          delay: i * 0.15,
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-        <ProductBrief
+            {/* Fitting Preview with Before/After Slider */}
+            <FittingPreview
+              userPhoto={userImageUrl}
+              fittingResult={fittingResult}
+              viewMode={viewMode}
+              isGenerating={isGenerating}
+              statusMessage={statusMessage}
+              onViewModeChange={setViewMode}
+            />
+
+            {/* Product Brief and Actions */}
+            <ProductBrief
+              product={product}
+              showStartButton={showStartButton}
+              showRetryOptions={showRetryOptions}
+              onStartFitting={handleStartFitting}
+              onTryOther={onClose}
+            />
+          </div>
+        </main>
+
+        {/* Footer with Size Selection and Purchase */}
+        <FittingFooter
           product={product}
-          showStartButton={showStartButton}
-          showRetryOptions={showRetryOptions}
-          onStartFitting={handleStartFitting}
-          onTryOther={onClose}
-          onRetakePhoto={() => fileInputRef.current?.click()}
-        />
-
-        {/* Hidden file input for retake */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              const reader = new FileReader();
-              reader.onload = (event) => onSaveUserPhoto(event.target?.result as string);
-              reader.readAsDataURL(file);
+          selectedProductId={selectedProductId}
+          onSizeSelect={setSelectedProductId}
+          onAddToCart={async () => {
+            const productId = selectedProductId || product.product_id;
+            if (!productId) {
+              haptic('error');
+              toast.error('Please select a size');
+              return;
+            }
+            setIsProcessing(true);
+            haptic('tap');
+            try {
+              await onAddToCart(productId);
+              haptic('success');
+            } finally {
+              setIsProcessing(false);
             }
           }}
+          onBuyNow={async () => {
+            const productId = selectedProductId || product.product_id;
+            if (!productId) {
+              haptic('error');
+              toast.error('Please select a size');
+              return;
+            }
+            setIsProcessing(true);
+            haptic('tap');
+            try {
+              await onBuyNow(productId);
+              haptic('purchase');
+              onClose();
+            } finally {
+              setIsProcessing(false);
+            }
+          }}
+          isProcessing={isProcessing}
         />
-      </main>
 
-      <FittingFooter
-        product={product}
-        onAddToCart={() => onAddToCart(product)}
-        onCheckout={() => {
-          /* TODO: Navigate to checkout */
-        }}
-      />
-    </div>
+        {/* Background Ambient Effect */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+          <motion.div
+            className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)',
+            }}
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

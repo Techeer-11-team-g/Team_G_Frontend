@@ -1,41 +1,92 @@
-import type { HistoryItem } from '@/types/api';
+import { useRef, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import type { UploadedImage } from '@/types/api';
 
 interface HistoryArchiveProps {
-  history: HistoryItem[];
-  onSelectItem: (item: HistoryItem) => void;
+  history: UploadedImage[];
+  onSelectItem: (item: UploadedImage) => void;
+  isLoading?: boolean;
+  hasMore?: boolean;
+  isFetchingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-export function HistoryArchive({ history, onSelectItem }: HistoryArchiveProps) {
+export function HistoryArchive({
+  history,
+  onSelectItem,
+  isLoading,
+  hasMore,
+  isFetchingMore,
+  onLoadMore,
+}: HistoryArchiveProps) {
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer로 스크롤 끝 감지
+  useEffect(() => {
+    if (!loadMoreRef.current || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isFetchingMore, onLoadMore]);
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center border-b border-black/5 pb-4">
-        <h4 className="text-[11px] uppercase tracking-[0.4em] font-black text-black/20">
-          Archive History
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-black/20">
+          History
         </h4>
-        <span className="text-[10px] font-mono opacity-20">[{history.length}/05]</span>
+        <span className="font-mono text-[10px] opacity-20">{history.length}</span>
       </div>
-      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-6">
-        {history.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => onSelectItem(item)}
-            className="w-24 h-32 flex-shrink-0 bg-white rounded-2xl overflow-hidden shadow-lg border border-white active:scale-95 transition-all cursor-pointer group"
-          >
-            <img
-              src={item.image}
-              alt="히스토리"
-              className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
-            />
+
+      {isLoading ? (
+        // 초기 로딩 스켈레톤
+        <div className="grid grid-cols-3 gap-0.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="aspect-[3/4] bg-black/5 animate-pulse" />
+          ))}
+        </div>
+      ) : history.length > 0 ? (
+        <>
+          <div className="grid grid-cols-3 gap-0.5">
+            {history.map((item) => (
+              <div
+                key={item.uploaded_image_id}
+                onClick={() => onSelectItem(item)}
+                className="group aspect-[3/4] cursor-pointer overflow-hidden transition-all active:opacity-70"
+              >
+                <img
+                  src={item.uploaded_image_url}
+                  alt="히스토리"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+            ))}
           </div>
-        ))}
-        {history.length === 0 && (
-          <div className="w-full py-12 border border-dashed border-black/10 rounded-2xl flex items-center justify-center">
-            <p className="text-[10px] uppercase font-black opacity-10 tracking-widest">
-              분석 기록이 없습니다
-            </p>
-          </div>
-        )}
-      </div>
+          {/* 무한 스크롤 트리거 */}
+          {hasMore && (
+            <div ref={loadMoreRef} className="flex justify-center py-4">
+              {isFetchingMore && (
+                <Loader2 size={20} className="animate-spin text-black/20" />
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex items-center justify-center py-16">
+          <p className="text-[10px] font-black uppercase tracking-widest opacity-10">
+            분석 기록이 없습니다
+          </p>
+        </div>
+      )}
     </div>
   );
 }

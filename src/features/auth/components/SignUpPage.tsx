@@ -1,23 +1,140 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Check, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, ArrowUpRight, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { authApi } from '@/api';
+import { useAuthStore } from '@/store';
+import { cn } from '@/utils/cn';
+import { haptic, easings, springs } from '@/motion';
+
+// Magnetic Input Component
+function MagneticInput({
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  onFocus,
+  onBlur,
+  isFocused,
+  className,
+  children,
+}: {
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  onFocus: () => void;
+  onBlur: () => void;
+  isFocused: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const inputRef = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 200 };
+  const xSpring = useSpring(x, springConfig);
+  const ySpring = useSpring(y, springConfig);
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!inputRef.current) return;
+    const rect = inputRef.current.getBoundingClientRect();
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height / 2;
+    const deltaX = (e.clientX - centerX) * 0.05;
+    const deltaY = (e.clientY - centerY) * 0.08;
+    x.set(deltaX);
+    y.set(deltaY);
+  };
+
+  const handlePointerLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={inputRef}
+      className="relative"
+      style={{ x: xSpring, y: ySpring }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      <motion.div
+        className={cn(
+          'absolute inset-0 rounded-xl opacity-0 pointer-events-none',
+          'bg-gradient-to-r from-white/5 via-white/10 to-white/5'
+        )}
+        animate={{
+          opacity: isFocused ? 1 : 0,
+          scale: isFocused ? 1 : 0.98,
+        }}
+        transition={{ duration: 0.2 }}
+      />
+      <div
+        className={cn(
+          'relative backdrop-blur-xl rounded-xl border transition-all duration-300',
+          isFocused
+            ? 'bg-white/[0.08] border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)]'
+            : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.12]'
+        )}
+      >
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          className={cn(
+            'w-full bg-transparent px-5 py-4 text-[15px] font-light tracking-wide',
+            'outline-none placeholder:text-white/30',
+            className
+          )}
+          placeholder={placeholder}
+        />
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+// Validation Badge Component
+function ValidationBadge({ isValid, validText, invalidText }: { isValid: boolean; validText: string; invalidText: string }) {
+  return (
+    <motion.span
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={cn(
+        'text-[10px] tracking-[0.15em] uppercase font-light',
+        isValid ? 'text-emerald-400/80' : 'text-white/30'
+      )}
+    >
+      {isValid ? validText : invalidText}
+    </motion.span>
+  );
+}
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const { login } = useAuthStore();
+
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  // 이메일 유효성 검사
+  const isUsernameValid = username.length >= 3;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPasswordMatch = password === passwordConfirm && passwordConfirm.length > 0;
 
-  // 비밀번호 강도 계산
   const getPasswordStrength = () => {
-    if (!password) return { level: 0, label: '', color: '' };
+    if (!password) return { level: 0, label: '' };
     let strength = 0;
     if (password.length >= 6) strength++;
     if (password.length >= 8) strength++;
@@ -25,254 +142,464 @@ export function SignUpPage() {
     if (/[0-9]/.test(password)) strength++;
     if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-    if (strength <= 1) return { level: 1, label: '약함', color: 'bg-red-400' };
-    if (strength <= 2) return { level: 2, label: '보통', color: 'bg-yellow-400' };
-    if (strength <= 3) return { level: 3, label: '좋음', color: 'bg-blue-400' };
-    return { level: 4, label: '강력', color: 'bg-green-500' };
+    if (strength <= 1) return { level: 1, label: 'Weak' };
+    if (strength <= 2) return { level: 2, label: 'Fair' };
+    if (strength <= 3) return { level: 3, label: 'Good' };
+    return { level: 4, label: 'Strong' };
   };
 
   const passwordStrength = getPasswordStrength();
-  const isFormValid = email && password && isEmailValid;
+  const isFormValid =
+    username &&
+    email &&
+    password &&
+    passwordConfirm &&
+    isUsernameValid &&
+    isEmailValid &&
+    isPasswordMatch;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
 
+    haptic('tap');
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
 
-    setShowSuccess(true);
-    localStorage.setItem('user_email', email);
-    localStorage.setItem('is_logged_in', 'true');
+    try {
+      const response = await authApi.register({
+        username,
+        email,
+        password,
+        password_confirm: passwordConfirm,
+      });
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    navigate('/onboarding/step1');
+      login(response.user, response.tokens.access, response.tokens.refresh);
+      localStorage.setItem('user_email', response.user.email);
+
+      haptic('success');
+      setShowSuccess(true);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      navigate('/onboarding/step1');
+    } catch (error: unknown) {
+      haptic('error');
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      const message = axiosError.response?.data?.detail || 'Registration failed';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // 성공 화면
+  // Success State
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        <div className="animate-in zoom-in-50 fade-in duration-500 flex flex-col items-center gap-6">
-          <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center animate-bounce">
-            <Check size={40} className="text-white" strokeWidth={3} />
-          </div>
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold">환영합니다!</h2>
-            <p className="text-black/50 text-[14px]">프로필을 설정해볼까요?</p>
-          </div>
-          <div className="flex gap-1 mt-4">
+      <motion.div
+        className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        {/* Ambient glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px]"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8 }}
+          />
+        </div>
+
+        <motion.div
+          className="relative flex flex-col items-center gap-8"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: easings.smooth }}
+        >
+          {/* Success Icon */}
+          <motion.div
+            className="relative"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, ...springs.bouncy }}
+          >
+            <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.4, ...springs.bouncy }}
+              >
+                <Check size={36} className="text-white" strokeWidth={1.5} />
+              </motion.div>
+            </div>
+            {/* Ripple effect */}
+            <motion.div
+              className="absolute inset-0 rounded-full border border-white/20"
+              initial={{ scale: 1, opacity: 0.5 }}
+              animate={{ scale: 2, opacity: 0 }}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
+          </motion.div>
+
+          {/* Welcome Text */}
+          <motion.div
+            className="text-center space-y-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <h2 className="text-2xl font-extralight tracking-wide">Welcome</h2>
+            <p className="text-[13px] text-white/40 font-light tracking-wide">
+              Let us personalize your experience
+            </p>
+          </motion.div>
+
+          {/* Loading dots */}
+          <motion.div
+            className="flex gap-1.5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
             {[0, 1, 2].map((i) => (
-              <div
+              <motion.div
                 key={i}
-                className="w-2 h-2 rounded-full bg-black animate-pulse"
-                style={{ animationDelay: `${i * 150}ms` }}
+                className="w-1.5 h-1.5 rounded-full bg-white/40"
+                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
               />
             ))}
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden relative">
-      {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-cyan-200/20 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: '1s' }}
-        />
+    <motion.div
+      className="min-h-screen bg-black text-white selection:bg-white/20 selection:text-white overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Ambient Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-white/[0.02] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
       </div>
 
       {/* Header */}
-      <header className="relative w-full px-6 py-8 flex justify-center items-center">
-        <div className="flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-700">
-          <h2 className="font-serif text-3xl font-bold tracking-tighter">Dres:sense</h2>
-          <span className="text-[8px] uppercase tracking-widest font-black opacity-30 italic">
-            AI Fashion Studio
+      <motion.header
+        className="fixed top-0 left-0 right-0 z-50 px-6 py-5"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5, ease: easings.smooth }}
+      >
+        <div className="flex items-center justify-between">
+          <motion.button
+            onClick={() => {
+              haptic('tap');
+              navigate('/');
+            }}
+            className="flex items-center gap-2 text-[13px] tracking-[0.02em] text-white/60 hover:text-white transition-colors"
+            whileHover={{ x: -3 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <ArrowLeft size={15} strokeWidth={1.5} />
+            <span className="font-light">Back</span>
+          </motion.button>
+          <span className="text-[11px] tracking-[0.15em] uppercase text-white/30 font-light">
+            Dressense
           </span>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Main Content */}
-      <main className="relative flex-1 max-w-md mx-auto w-full px-6 py-8 flex flex-col justify-center">
-        <div className="space-y-8">
-          {/* Title with Icon */}
-          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-5 duration-700">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-black/5 mb-2">
-              <Sparkles size={24} className="text-black/60" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">회원가입</h1>
-            <p className="text-[13px] text-black/50">새로운 패션 경험을 시작하세요</p>
-          </div>
+      <main className="relative min-h-screen flex flex-col justify-center px-6 py-28">
+        <motion.div
+          className="max-w-[380px] mx-auto w-full"
+          initial={{ opacity: 0, y: 60 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: easings.smooth, delay: 0.1 }}
+        >
+          {/* Title */}
+          <motion.div
+            className="mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+          >
+            <motion.p
+              className="text-[13px] tracking-[0.08em] uppercase text-white/40 font-light mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              New fashion experience
+            </motion.p>
+            <h1 className="text-[clamp(2.2rem,7vw,3.2rem)] font-extralight leading-[1.05] tracking-[-0.02em]">
+              <motion.span
+                className="block"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5, duration: 0.6, ease: easings.smooth }}
+              >
+                Create your
+              </motion.span>
+              <motion.span
+                className="block text-white/60"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6, duration: 0.6, ease: easings.smooth }}
+              >
+                account
+              </motion.span>
+            </h1>
+          </motion.div>
 
           {/* Form */}
-          <form
+          <motion.form
             onSubmit={handleSubmit}
-            className="space-y-5 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-150"
+            className="space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
           >
-            {/* Email Input */}
-            <div className="space-y-2">
-              <div
-                className={`relative transition-all duration-300 ${
-                  focusedField === 'email' ? 'scale-[1.02]' : ''
-                }`}
-              >
-                <Mail
-                  size={18}
-                  className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${
-                    focusedField === 'email' ? 'text-black' : 'text-black/30'
-                  }`}
-                />
-                <input
-                  type="email"
-                  placeholder="이메일"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  className={`w-full bg-white border-2 pl-14 pr-12 py-4 text-[14px] rounded-2xl outline-none transition-all duration-300 ${
-                    focusedField === 'email'
-                      ? 'border-black shadow-lg shadow-black/5'
-                      : email && isEmailValid
-                        ? 'border-green-400'
-                        : email && !isEmailValid
-                          ? 'border-red-300'
-                          : 'border-black/10'
-                  }`}
-                />
-                {email && (
-                  <div
-                    className={`absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 ${
-                      isEmailValid ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                      <Check size={14} className="text-white" strokeWidth={3} />
-                    </div>
-                  </div>
+            {/* Username */}
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+            >
+              <div className="flex items-center justify-between ml-1 mr-1">
+                <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
+                  Username
+                </label>
+                {username && (
+                  <ValidationBadge isValid={isUsernameValid} validText="Valid" invalidText="3+ chars" />
                 )}
               </div>
-              {email && !isEmailValid && (
-                <p className="text-[11px] text-red-400 pl-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                  올바른 이메일 형식을 입력해주세요
-                </p>
-              )}
-            </div>
+              <MagneticInput
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onFocus={() => setFocusedField('username')}
+                onBlur={() => setFocusedField(null)}
+                isFocused={focusedField === 'username'}
+                placeholder="Choose a username"
+              />
+            </motion.div>
 
-            {/* Password Input */}
-            <div className="space-y-3">
-              <div
-                className={`relative transition-all duration-300 ${
-                  focusedField === 'password' ? 'scale-[1.02]' : ''
-                }`}
+            {/* Email */}
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <div className="flex items-center justify-between ml-1 mr-1">
+                <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
+                  Email
+                </label>
+                {email && (
+                  <ValidationBadge isValid={isEmailValid} validText="Valid" invalidText="Invalid" />
+                )}
+              </div>
+              <MagneticInput
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
+                isFocused={focusedField === 'email'}
+                placeholder="Enter your email"
+              />
+            </motion.div>
+
+            {/* Password */}
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+            >
+              <div className="flex items-center justify-between ml-1 mr-1">
+                <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
+                  Password
+                </label>
+                {password && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={cn(
+                      'text-[10px] tracking-[0.15em] uppercase font-light',
+                      passwordStrength.level >= 3 ? 'text-emerald-400/80' : 'text-white/30'
+                    )}
+                  >
+                    {passwordStrength.label}
+                  </motion.span>
+                )}
+              </div>
+              <MagneticInput
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
+                isFocused={focusedField === 'password'}
+                placeholder="Create a password"
+                className="pr-16"
               >
-                <Lock
-                  size={18}
-                  className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${
-                    focusedField === 'password' ? 'text-black' : 'text-black/30'
-                  }`}
-                />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="비밀번호"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                  className={`w-full bg-white border-2 pl-14 pr-14 py-4 text-[14px] rounded-2xl outline-none transition-all duration-300 ${
-                    focusedField === 'password'
-                      ? 'border-black shadow-lg shadow-black/5'
-                      : 'border-black/10'
-                  }`}
-                />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-all duration-200 hover:scale-110 active:scale-95"
+                  onClick={() => {
+                    haptic('tap');
+                    setShowPassword(!showPassword);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] tracking-wider uppercase text-white/40 hover:text-white/70 transition-colors"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? 'Hide' : 'Show'}
                 </button>
-              </div>
-
-              {/* Password Strength Indicator */}
-              {password && (
-                <div className="px-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 bg-black/5 rounded-full overflow-hidden flex gap-1">
-                      {[1, 2, 3, 4].map((level) => (
-                        <div
+              </MagneticInput>
+              {/* Password strength bar */}
+              <AnimatePresence>
+                {password && (
+                  <motion.div
+                    className="flex gap-1 pt-1 px-1"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    {[1, 2, 3, 4].map((level) => {
+                      const getStrengthColor = () => {
+                        if (level > passwordStrength.level) return 'bg-white/[0.08]';
+                        if (passwordStrength.level <= 1) return 'bg-red-400/60';
+                        if (passwordStrength.level === 2) return 'bg-amber-400/60';
+                        if (passwordStrength.level === 3) return 'bg-blue-400/60';
+                        return 'bg-emerald-400/60';
+                      };
+                      return (
+                        <motion.div
                           key={level}
-                          className={`flex-1 rounded-full transition-all duration-500 ${
-                            level <= passwordStrength.level
-                              ? passwordStrength.color
-                              : 'bg-transparent'
-                          }`}
-                          style={{
-                            transitionDelay: `${level * 50}ms`,
-                          }}
+                          className={cn(
+                            'h-[2px] flex-1 rounded-full transition-colors duration-300',
+                            getStrengthColor()
+                          )}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ delay: level * 0.05 }}
                         />
-                      ))}
-                    </div>
-                    <span
-                      className={`text-[11px] font-semibold transition-colors duration-300 ${
-                        passwordStrength.level <= 1
-                          ? 'text-red-400'
-                          : passwordStrength.level === 2
-                            ? 'text-yellow-500'
-                            : passwordStrength.level === 3
-                              ? 'text-blue-500'
-                              : 'text-green-500'
-                      }`}
-                    >
-                      {passwordStrength.label}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Password Confirm */}
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <div className="flex items-center justify-between ml-1 mr-1">
+                <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
+                  Confirm Password
+                </label>
+                {passwordConfirm && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={cn(
+                      'text-[10px] tracking-[0.15em] uppercase font-light',
+                      isPasswordMatch ? 'text-emerald-400/80' : 'text-red-400/80'
+                    )}
+                  >
+                    {isPasswordMatch ? 'Match' : 'Mismatch'}
+                  </motion.span>
+                )}
+              </div>
+              <MagneticInput
+                type="password"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                onFocus={() => setFocusedField('passwordConfirm')}
+                onBlur={() => setFocusedField(null)}
+                isFocused={focusedField === 'passwordConfirm'}
+                placeholder="Confirm your password"
+              />
+            </motion.div>
 
             {/* Submit Button */}
-            <div className="pt-2">
-              <Button
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.75 }}
+              className="pt-4"
+            >
+              <motion.button
                 type="submit"
-                className={`w-full transition-all duration-300 ${
-                  isFormValid
-                    ? 'hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20'
-                    : 'opacity-50'
-                }`}
                 disabled={!isFormValid || isLoading}
+                className={cn(
+                  'group w-full py-4 rounded-xl',
+                  'flex items-center justify-center gap-3',
+                  'font-light tracking-[0.05em] text-[14px]',
+                  'transition-all duration-300',
+                  'backdrop-blur-xl border',
+                  isFormValid && !isLoading
+                    ? 'bg-white text-black border-white hover:bg-white/90 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]'
+                    : 'bg-white/[0.05] text-white/30 border-white/[0.08] cursor-not-allowed'
+                )}
+                whileHover={isFormValid && !isLoading ? { scale: 1.01, y: -1 } : {}}
+                whileTap={isFormValid && !isLoading ? { scale: 0.99 } : {}}
               >
                 {isLoading ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>잠시만요...</span>
-                  </div>
+                  <motion.div
+                    className="w-5 h-5 border-[1.5px] border-black/20 border-t-black rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  />
                 ) : (
-                  '시작하기'
+                  <>
+                    <span>Get Started</span>
+                    <motion.div
+                      initial={{ x: 0, y: 0 }}
+                      whileHover={{ x: 2, y: -2 }}
+                      transition={springs.snappy}
+                    >
+                      <ArrowUpRight size={16} strokeWidth={1.5} />
+                    </motion.div>
+                  </>
                 )}
-              </Button>
-            </div>
-          </form>
+              </motion.button>
+            </motion.div>
+          </motion.form>
 
           {/* Login Link */}
-          <p className="text-center text-[13px] text-black/50 animate-in fade-in duration-700 delay-300">
-            이미 계정이 있으신가요?{' '}
-            <button className="font-semibold text-black hover:underline transition-all hover:tracking-wide">
-              로그인
-            </button>
-          </p>
-        </div>
+          <motion.div
+            className="mt-10 pt-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
+            <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
+            <p className="text-[13px] text-white/40 font-light tracking-wide text-center">
+              Already have an account?{' '}
+              <motion.button
+                onClick={() => {
+                  haptic('tap');
+                  navigate('/login');
+                }}
+                className="text-white hover:text-white/70 transition-colors"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Sign in
+              </motion.button>
+            </p>
+          </motion.div>
+        </motion.div>
       </main>
-
-      {/* Footer */}
-      <footer className="relative py-6 text-center">
-        <p className="text-[9px] uppercase tracking-widest font-black text-black/10">
-          Dres:sense v1.0.0
-        </p>
-      </footer>
-    </div>
+    </motion.div>
   );
 }

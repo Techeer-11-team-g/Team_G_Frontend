@@ -8,7 +8,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: '/', label: '홈', icon: Home },
+  { path: '/home', label: '홈', icon: Home },
   { path: '/orders', label: '주문내역', icon: Package },
   { path: '/cart', label: '장바구니', icon: ShoppingBag },
   { path: '/profile', label: '프로필', icon: User },
@@ -23,8 +23,8 @@ export function BottomNavigation({ cartCount = 0 }: BottomNavigationProps) {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-sticky bg-white/90 backdrop-blur-xl border-t border-black/5 safe-area-bottom">
-      <div className="max-w-md mx-auto flex items-center justify-around py-2 pb-safe">
+    <nav className="safe-area-bottom fixed bottom-0 left-0 right-0 z-sticky border-t border-black/5 bg-white/90 backdrop-blur-xl">
+      <div className="pb-safe mx-auto flex max-w-md items-center justify-around py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -34,24 +34,20 @@ export function BottomNavigation({ cartCount = 0 }: BottomNavigationProps) {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center gap-1 py-2 px-4 min-w-[64px] transition-all ${
+              className={`flex min-w-[64px] flex-col items-center justify-center gap-1 px-4 py-2 transition-all ${
                 isActive ? 'text-black' : 'text-black/30'
               }`}
             >
               <div className="relative">
-                <Icon
-                  size={22}
-                  strokeWidth={isActive ? 2 : 1.5}
-                  className="transition-all"
-                />
+                <Icon size={22} strokeWidth={isActive ? 2 : 1.5} className="transition-all" />
                 {showBadge && (
-                  <span className="absolute -top-1 -right-2 w-4 h-4 bg-black text-white text-[8px] font-black rounded-full flex items-center justify-center">
+                  <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[8px] font-black text-white">
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
                 )}
               </div>
               <span
-                className={`text-[9px] uppercase tracking-wider font-black transition-all ${
+                className={`text-[9px] font-black uppercase tracking-wider transition-all ${
                   isActive ? 'opacity-100' : 'opacity-50'
                 }`}
               >

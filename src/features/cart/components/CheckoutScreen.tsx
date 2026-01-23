@@ -32,6 +32,9 @@ export function CheckoutScreen({ items, onClose, onComplete }: CheckoutScreenPro
 
   const calculateTotal = () => {
     return activeItems.reduce((acc, item) => {
+      if (typeof item.price === 'number') {
+        return acc + item.price;
+      }
       const num = parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0;
       return acc + num;
     }, 0);

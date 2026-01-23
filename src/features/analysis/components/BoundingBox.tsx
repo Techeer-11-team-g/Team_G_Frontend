@@ -2,21 +2,21 @@ import { cn } from '@/utils/cn';
 
 interface BoundingBoxProps {
   label: string;
-  box: [number, number, number, number]; // [ymin, xmin, ymax, xmax]
+  box: [number, number, number, number]; // [x1, y1, x2, y2]
   isActive: boolean;
   onClick: () => void;
 }
 
 export function BoundingBox({ label, box, isActive, onClick }: BoundingBoxProps) {
-  const [ymin, xmin, ymax, xmax] = box;
+  const [x1, y1, x2, y2] = box;
 
   return (
     <div
       style={{
-        top: `${ymin / 10}%`,
-        left: `${xmin / 10}%`,
-        width: `${(xmax - xmin) / 10}%`,
-        height: `${(ymax - ymin) / 10}%`,
+        top: `${y1 * 100}%`,
+        left: `${x1 * 100}%`,
+        width: `${(x2 - x1) * 100}%`,
+        height: `${(y2 - y1) * 100}%`,
         pointerEvents: 'auto',
       }}
       onClick={onClick}

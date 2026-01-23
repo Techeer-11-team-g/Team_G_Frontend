@@ -44,15 +44,23 @@ export function useImageInput({
   // File upload handler
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
+      console.log('2. useImageInput handleFileChange called');
       const file = event.target.files?.[0];
-      if (!file) return;
+      if (!file) {
+        console.log('2-1. No file found');
+        return;
+      }
+      console.log('2-2. Reading file:', file.name);
 
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('3. FileReader onloadend');
         const base64 = reader.result as string;
+        console.log('4. Calling onImageReady, base64 length:', base64?.length);
         onImageReady(base64);
       };
       reader.onerror = () => {
+        console.log('3-ERR. FileReader error');
         onError?.('파일을 읽는 중 오류가 발생했습니다.');
       };
       reader.readAsDataURL(file);
