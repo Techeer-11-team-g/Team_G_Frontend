@@ -37,6 +37,10 @@ import type {
   UserProfileUpdateRequest,
   // 히스토리
   HistoryResponse,
+  // 채팅
+  ChatResponse,
+  ChatStatusRequest,
+  ChatSession,
 } from '@/types/api';
 
 // =============================================
@@ -68,10 +72,11 @@ export const authApi = {
 // =============================================
 
 export const uploadedImagesApi = {
-  /** 이미지 업로드 */
+  /** 이미지 업로드 (auto_analyze=true로 분석 자동 시작) */
   upload: async (file: File): Promise<UploadedImage> => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('auto_analyze', 'true');
     const { data } = await apiClient.post('/api/v1/uploaded-images', formData, {
       headers: { 'Content-Type': undefined },
     });
@@ -249,5 +254,106 @@ export const usersApi = {
   updateProfile: async (request: UserProfileUpdateRequest): Promise<UserProfile> => {
     const { data } = await apiClient.patch('/api/v1/users/profile', request);
     return data;
+  },
+};
+
+// =============================================
+// 채팅 API (통합 인터페이스)
+// =============================================
+
+export const chatApi = {
+  /** 채팅 메시지 전송 (텍스트 전용) */
+  send: async (message: string, sessionId?: string, analysisId?: number): Promise<ChatResponse> => {
+    const { data } = await apiClient.post('/api/v1/chat', {
+      message,
+      session_id: sessionId,
+      ...(analysisId && { analysis_id: analysisId }),
+    });
+    return data;
+  },
+
+  /** 채팅 메시지 전송 (이미지 포함) */
+  sendWithImage: async (
+    message: string,
+    image: File,
+    sessionId?: string,
+    analysisId?: number
+  ): Promise<ChatResponse> => {
+    const formData = new FormData();
+    formData.append('message', message);
+    formData.append('image', image);
+    if (sessionId) {
+      formData.append('session_id', sessionId);
+    }
+    if (analysisId) {
+      formData.append('analysis_id', analysisId.toString());
+    }
+    const { data } = await apiClient.post('/api/v1/chat', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return data;
+  },
+
+  /** 비동기 작업 상태 확인 */
+  checkStatus: async (request: ChatStatusRequest): Promise<ChatResponse> => {
+    const { data } = await apiClient.post('/api/v1/chat/status', request);
+    return data;
+  },
+
+  /** 세션 정보 조회 */
+  getSession: async (sessionId: string): Promise<ChatSession> => {
+    const { data } = await apiClient.get(`/api/v1/chat/sessions/${sessionId}`);
+    return data;
+  },
+
+  /** 세션 삭제 (대화 초기화) */
+  deleteSession: async (sessionId: string): Promise<void> => {
+    await apiClient.delete(`/api/v1/chat/sessions/${sessionId}`);
+  },
+};
+
+// =============================================
+// 피드 API (Pinterest 스타일)
+// =============================================
+
+import type {
+  FeedResponse,
+  StylesResponse,
+  VisibilityToggleRequest,
+} from '@/types/api';
+
+export const feedApi = {
+  /** 스타일 목록 조회 */
+  getStyles: async (): Promise<StylesResponse> => {
+    const { data } = await apiClient.get('/api/v1/feed/styles');
+    return data;
+  },
+
+  /** 공개 피드 조회 (스타일 필터 지원) */
+  getPublicFeed: async (params?: {
+    limit?: number;
+    cursor?: string;
+    category?: string;
+    style?: string;
+  }): Promise<FeedResponse> => {
+    const { data } = await apiClient.get('/api/v1/feed', { params });
+    return data;
+  },
+
+  /** 내 히스토리 조회 */
+  getMyHistory: async (params?: {
+    limit?: number;
+    cursor?: string;
+  }): Promise<FeedResponse> => {
+    const { data } = await apiClient.get('/api/v1/my-history', { params });
+    return data;
+  },
+
+  /** 공개/비공개 토글 */
+  toggleVisibility: async (
+    imageId: number,
+    request: VisibilityToggleRequest
+  ): Promise<void> => {
+    await apiClient.patch(`/api/v1/uploaded-images/${imageId}/visibility`, request);
   },
 };

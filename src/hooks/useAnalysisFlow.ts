@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useAnalysisMutation, useAnalysisStatus, useAnalysisResult } from '@/features/analysis';
+import { useAnalysisStatus, useAnalysisResult } from '@/features/analysis';
 import { uploadedImagesApi } from '@/api';
 import type { LocalAnalysisResult } from '@/types/local';
-import type { AnalyzedItem, AnalysisResultResponse, UploadedImage } from '@/types/api';
+import type { AnalyzedItem, AnalysisResultResponse, UploadedImage, HistoryItem } from '@/types/api';
 
 type AnalysisStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
 
@@ -67,24 +67,23 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     }
   }, [hasMoreHistory, isFetchingMoreHistory, fetchNextPage]);
 
-  // Analysis API hooks
-  const analysisMutation = useAnalysisMutation();
-  const { data: statusData } = useAnalysisStatus(
-    analysisId,
-    !!analysisId && analysisMutation.isSuccess
-  );
+  // 업로드 진행 상태
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Analysis API hooks - auto_analyze=true 이므로 analysisId가 있으면 바로 폴링 시작
+  const { data: statusData } = useAnalysisStatus(analysisId, !!analysisId);
   const { data: apiResult } = useAnalysisResult(
     analysisId,
     statusData?.status === 'DONE'
   );
 
   // 현재 상태 및 진행률
-  const status: AnalysisStatus = statusData?.status ?? (analysisMutation.isPending ? 'PENDING' : null);
+  const status: AnalysisStatus = statusData?.status ?? (isUploading ? 'PENDING' : null);
   const progress = statusData?.progress ?? 0;
 
   // Loading state
   const isAnalyzing =
-    analysisMutation.isPending ||
+    isUploading ||
     (!!analysisId && statusData?.status !== 'DONE' && statusData?.status !== 'FAILED');
 
   // Convert API result to local format when analysis completes
@@ -134,17 +133,11 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
 
   // Handle errors
   useEffect(() => {
-    if (analysisMutation.isError) {
-      setError('분석에 실패했습니다. 다시 시도해주세요.');
-      toast.error('분석에 실패했습니다', {
-        description: '다시 시도해주세요',
-      });
-    }
     if (statusData?.status === 'FAILED') {
       setError('분석 처리 중 오류가 발생했습니다.');
       toast.error('분석 처리 중 오류가 발생했습니다');
     }
-  }, [analysisMutation.isError, statusData?.status]);
+  }, [statusData?.status]);
 
   const startAnalysis = useCallback(
     async (base64Image: string) => {
@@ -152,30 +145,35 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
       setAnalysisId(null);
       setLocalResult(undefined);
       setImage(base64Image);
+      setIsUploading(true);
 
       try {
         // Convert base64 to File for upload
         const blob = await fetch(base64Image).then((r) => r.blob());
         const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
 
-        console.log('[Analysis] 1. Uploading image...');
-        // Upload image first
+        console.log('[Analysis] 1. Uploading image with auto_analyze=true...');
+        // Upload image with auto_analyze=true - analysis starts automatically
         const uploadedImage = await uploadedImagesApi.upload(file);
-        console.log('[Analysis] 2. Upload success:', uploadedImage);
+        console.log('[Analysis] 2. Upload success, analysis_id:', uploadedImage.analysis_id);
 
-        // Start analysis with uploaded image
-        console.log('[Analysis] 3. Starting analysis...');
-        const result = await analysisMutation.mutateAsync({
-          uploadedImageId: uploadedImage.uploaded_image_id,
-        });
-        console.log('[Analysis] 4. Analysis started:', result);
-        setAnalysisId(result.analysis_id);
+        // auto_analyze=true이므로 바로 analysis_id를 받음
+        if (uploadedImage.analysis_id) {
+          setAnalysisId(uploadedImage.analysis_id);
+        } else {
+          throw new Error('analysis_id not found in response');
+        }
       } catch (err) {
         console.error('[Analysis] Error:', err);
         setError('이미지 업로드에 실패했습니다.');
+        toast.error('이미지 업로드에 실패했습니다', {
+          description: '다시 시도해주세요',
+        });
+      } finally {
+        setIsUploading(false);
       }
     },
-    [analysisMutation]
+    []
   );
 
   const reset = useCallback(() => {
@@ -183,28 +181,63 @@ export function useAnalysisFlow(): UseAnalysisFlowReturn {
     setAnalysisId(null);
     setLocalResult(undefined);
     setError(null);
-    analysisMutation.reset();
-  }, [analysisMutation]);
+    setIsUploading(false);
+  }, []);
 
   const loadFromHistory = useCallback(
-    (item: UploadedImage) => {
-      // 히스토리 이미지 URL로 분석 시작
+    async (item: UploadedImage) => {
       setError(null);
-      setAnalysisId(null);
       setLocalResult(undefined);
       setImage(item.uploaded_image_url);
 
-      // 이미 업로드된 이미지이므로 바로 분석 시작
-      analysisMutation.mutateAsync({
-        uploadedImageId: item.uploaded_image_id,
-      }).then((result) => {
-        setAnalysisId(result.analysis_id);
-      }).catch((err) => {
-        console.error('[Analysis] Error:', err);
-        setError('분석 시작에 실패했습니다.');
-      });
+      // analysis_id 설정 (채팅 리파인먼트용)
+      if (item.analysis_id) {
+        setAnalysisId(item.analysis_id);
+      } else {
+        setAnalysisId(null);
+      }
+
+      try {
+        // 이미 분석된 결과 조회
+        const historyResult = await uploadedImagesApi.getHistory(item.uploaded_image_id);
+
+        // HistoryItem을 AnalyzedItem으로 변환
+        const convertedItems: AnalyzedItem[] = historyResult.items.map((historyItem: HistoryItem) => ({
+          id: historyItem.detected_object_id.toString(),
+          label: historyItem.category_name,
+          category: mapCategoryName(historyItem.category_name),
+          box_2d: [historyItem.bbox.x1, historyItem.bbox.y1, historyItem.bbox.x2, historyItem.bbox.y2] as [number, number, number, number],
+          description: '',
+          aesthetic: '',
+          candidates: historyItem.match ? [{
+            brand: historyItem.match.product.brand_name,
+            name: historyItem.match.product.product_name,
+            price: `₩${historyItem.match.product.selling_price.toLocaleString()}`,
+            image: historyItem.match.product.image_url,
+            source_url: historyItem.match.product.product_url,
+            match_type: 'Exact' as const,
+            color_vibe: '',
+            product_id: historyItem.match.product_id,
+            sizes: historyItem.match.product.sizes,
+            detected_object_id: historyItem.detected_object_id,
+          }] : [],
+        }));
+
+        const result: LocalAnalysisResult = {
+          id: item.analysis_id?.toString() || item.uploaded_image_id.toString(),
+          image: item.uploaded_image_url,
+          items: convertedItems,
+          summary: `${convertedItems.length}개 아이템`,
+          timestamp: Date.now(),
+        };
+
+        setLocalResult(result);
+      } catch (err) {
+        console.error('[History] Error:', err);
+        setError('히스토리 조회에 실패했습니다.');
+      }
     },
-    [analysisMutation]
+    []
   );
 
   const updateAnalysisResult = useCallback(

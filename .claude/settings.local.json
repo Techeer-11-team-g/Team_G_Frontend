@@ -17,7 +17,21 @@
       "Bash(gh auth:*)",
       "Bash(git restore:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:larsonstudio.com)",
+      "WebFetch(domain:www.grilledpixels.com)",
+      "WebFetch(domain:www.davidrinman.com)",
+      "WebFetch(domain:my.spline.design)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.osmo.supply)",
+      "Bash(echo:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npx eslint:*)",
+      "Bash(wc:*)"
     ]
   }
 }

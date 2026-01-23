@@ -84,6 +84,8 @@ export interface UploadedImage {
   uploaded_image_id: number;
   uploaded_image_url: string;
   created_at: string;
+  auto_analyze?: boolean;
+  analysis_id?: number;
 }
 
 /** 업로드 이미지 목록 응답 */
@@ -110,8 +112,9 @@ export interface UserImage {
 /** 상품 사이즈 정보 */
 export interface ProductSize {
   size_code_id: number;
-  size_value: string;
-  inventory: number;
+  size_value?: string;
+  size?: string; // Alternative field name from some API responses
+  inventory?: number;
   selected_product_id: number;
 }
 
@@ -123,7 +126,7 @@ export interface Product {
   selling_price: number;
   image_url: string;
   product_url: string;
-  sizes?: ProductSize[];
+  sizes?: ProductSize[] | string[];
 }
 
 /** 상품 매치 정보 */
@@ -400,6 +403,86 @@ export interface HistoryResponse {
 }
 
 // ─────────────────────────────────────────────
+// 피드 (Pinterest 스타일)
+// ─────────────────────────────────────────────
+
+/** 피드 사용자 정보 */
+export interface FeedUser {
+  id: number;
+  username: string;
+}
+
+/** 피드 상품 사이즈 */
+export interface FeedProductSize {
+  size_code_id: number;
+  size_value: string;
+}
+
+/** 피드 매칭 상품 */
+export interface FeedMatchedProduct {
+  id: number;
+  brand_name: string;
+  product_name: string;
+  selling_price: number;
+  image_url: string;
+  product_url: string;
+  sizes?: FeedProductSize[];
+}
+
+/** 피드 바운딩 박스 */
+export interface FeedBBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/** 피드 감지 객체 */
+export interface FeedDetectedObject {
+  id: number;
+  category: string;
+  cropped_image_url?: string;
+  bbox?: FeedBBox;
+  matched_product: FeedMatchedProduct | null;
+}
+
+/** 피드 아이템 */
+export interface FeedItem {
+  id: number;
+  uploaded_image_url: string;
+  user: FeedUser;
+  created_at: string;
+  is_public: boolean;
+  analysis_status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
+  analysis_id?: number;
+  style_tag1?: string;
+  style_tag2?: string;
+  detected_objects: FeedDetectedObject[];
+}
+
+/** 피드 응답 */
+export interface FeedResponse {
+  items: FeedItem[];
+  next_cursor: string | null;
+}
+
+/** 스타일 옵션 */
+export interface StyleOption {
+  value: string;
+  label: string;
+}
+
+/** 스타일 목록 응답 */
+export interface StylesResponse {
+  styles: StyleOption[];
+}
+
+/** 공개/비공개 토글 요청 */
+export interface VisibilityToggleRequest {
+  is_public: boolean;
+}
+
+// ─────────────────────────────────────────────
 // 레거시 호환 타입 (기존 코드 호환용)
 // ─────────────────────────────────────────────
 
@@ -407,14 +490,16 @@ export interface HistoryResponse {
 export interface ProductCandidate {
   brand: string;
   name: string;
-  price: string;
+  price: string | number;
   image: string;
   source_url: string;
   match_type: 'Exact' | 'Similar';
   color_vibe: string;
   // 새 API 필드
   product_id?: number;
-  sizes?: ProductSize[];
+  image_url?: string;
+  similarity_score?: number;
+  sizes?: ProductSize[] | string[];
   detected_object_id?: number;
 }
 
@@ -445,4 +530,166 @@ export interface TryOnResult {
   userPhoto: string;
   resultImage: string;
   createdAt: number;
+}
+
+// ─────────────────────────────────────────────
+// 채팅 API (통합 인터페이스)
+// ─────────────────────────────────────────────
+
+/** 채팅 응답 타입 */
+export type ChatResponseType =
+  | 'search_results'
+  | 'no_results'
+  | 'analysis_pending'
+  | 'fitting_pending'
+  | 'fitting_result'
+  | 'batch_fitting_pending'
+  | 'cart_added'
+  | 'cart_list'
+  | 'cart_empty'
+  | 'order_created'
+  | 'size_recommendation'
+  | 'ask_selection'
+  | 'ask_size'
+  | 'ask_body_info'
+  | 'ask_user_image'
+  | 'ask_search_first'
+  | 'greeting'
+  | 'help'
+  | 'general'
+  | 'error';
+
+/** Bounding Box for detected object overlay */
+export interface ChatBBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/** 채팅 상품 정보 */
+export interface ChatProduct {
+  index?: number;
+  product_id: number;
+  brand_name: string;
+  product_name: string;
+  selling_price: number;
+  image_url: string;
+  product_url: string;
+  sizes?: string[];
+  // Image analysis specific fields
+  category?: string;
+  confidence_score?: number;
+  detected_object_id?: number;
+  bbox?: ChatBBox;
+}
+
+/** 채팅 장바구니 아이템 */
+export interface ChatCartItem {
+  cart_item_id: number;
+  product: ChatProduct;
+  size: string;
+  quantity: number;
+}
+
+/** 채팅 Suggestion */
+export interface ChatSuggestion {
+  label: string;
+  action: string;
+}
+
+/** 채팅 응답 데이터 */
+export interface ChatResponseData {
+  // search_results
+  products?: ChatProduct[];
+  total_count?: number;
+  understood_intent?: string;
+
+  // fitting
+  fitting_id?: number;
+  fitting_ids?: number[];
+  fitting_image_url?: string;
+  color_match_score?: number;
+
+  // cart
+  items?: ChatCartItem[];
+  total_price?: number;
+  item_count?: number;
+
+  // order
+  order_id?: number;
+  items_count?: number;
+
+  // size
+  recommended_size?: string;
+  available_sizes?: string[];
+  confidence?: number;
+
+  // status (pending)
+  analysis_id?: number;
+  status_url?: string;
+
+  // error
+  error_type?: string;
+
+  // common
+  product?: ChatProduct;
+  size?: string;
+  quantity?: number;
+
+  // ask_selection
+  options?: ChatProduct[];
+
+  // image analysis
+  uploaded_image_url?: string;
+  uploaded_image_id?: number;
+}
+
+/** 채팅 응답 본문 */
+export interface ChatResponseBody {
+  text: string;
+  type: ChatResponseType;
+  data: ChatResponseData;
+  suggestions: ChatSuggestion[];
+}
+
+/** 채팅 컨텍스트 */
+export interface ChatContext {
+  current_analysis_id?: number;
+  has_search_results: boolean;
+  has_user_image: boolean;
+  cart_item_count: number;
+}
+
+/** 채팅 API 응답 */
+export interface ChatResponse {
+  session_id: string;
+  response: ChatResponseBody;
+  context: ChatContext;
+}
+
+/** 채팅 상태 확인 요청 */
+export interface ChatStatusRequest {
+  type: 'analysis' | 'fitting';
+  id: number;
+  session_id: string;
+}
+
+/** 채팅 세션 턴 */
+export interface ChatTurn {
+  user: string;
+  assistant: string;
+  timestamp: string;
+}
+
+/** 채팅 세션 정보 */
+export interface ChatSession {
+  session_id: string;
+  user_id: number;
+  created_at: string;
+  last_activity: string;
+  has_search_results: boolean;
+  has_user_image: boolean;
+  cart_item_count: number;
+  turns: ChatTurn[];
 }
