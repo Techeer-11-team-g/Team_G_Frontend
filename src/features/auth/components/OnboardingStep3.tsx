@@ -79,7 +79,7 @@ function GlassInput({
 
 export function OnboardingStep3() {
   const navigate = useNavigate();
-  const setUser = useUserStore((state) => state.setUser);
+  const { user, setUser } = useUserStore();
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -118,7 +118,8 @@ export function OnboardingStep3() {
   const callOnboardingApi = async (paymentInfo: string) => {
     const profileStr = localStorage.getItem('user_profile');
     const profile = profileStr ? JSON.parse(profileStr) : {};
-    const userEmail = localStorage.getItem('user_email') || '';
+    // localStorage 또는 user store에서 이메일 가져오기 (Google 로그인 지원)
+    const userEmail = localStorage.getItem('user_email') || user?.user_email || '';
 
     try {
       const userProfile = await usersApi.onboarding({
