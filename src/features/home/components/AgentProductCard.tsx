@@ -155,15 +155,16 @@ export const AgentProductCard = memo(function AgentProductCard({
           <motion.div
             className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full"
             style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(0,0,0,0.6)',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.3)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
             }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
           >
-            <span className="text-xs font-semibold text-white">{index}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-sm">{index}</span>
           </motion.div>
 
           {/* Actions on hover */}

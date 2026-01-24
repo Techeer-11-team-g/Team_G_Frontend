@@ -71,8 +71,8 @@ export function FittingFooter({
             transition={{ delay: 0.4, ...springs.gentle }}
           >
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/40">
-                Select Size
+              <p className="text-[10px] font-mono tracking-[0.15em] text-white/40">
+                사이즈 선택
               </p>
               {selectedProductId && (
                 <motion.div
@@ -82,7 +82,7 @@ export function FittingFooter({
                   transition={springs.bouncy}
                 >
                   <Check size={12} className="text-white/60" />
-                  <span className="text-[10px] font-mono text-white/40">Selected</span>
+                  <span className="text-[10px] font-mono text-white/40">선택됨</span>
                 </motion.div>
               )}
             </div>
@@ -121,7 +121,7 @@ export function FittingFooter({
                     disabled={!isSelectable}
                     className={cn(
                       'relative px-5 py-3 rounded-xl',
-                      'text-[11px] font-mono tracking-wider',
+                      'text-[12px] font-medium tracking-wide',
                       'transition-all duration-300',
                       'border',
                       isSelected
@@ -134,9 +134,9 @@ export function FittingFooter({
                           ? [
                               'bg-white/[0.03] backdrop-blur-sm',
                               'border-white/[0.08]',
-                              'text-white/60',
+                              'text-white/70',
                               'hover:bg-white/[0.06] hover:border-white/[0.15]',
-                              'hover:text-white/80',
+                              'hover:text-white/90',
                             ]
                           : [
                               'bg-white/[0.01]',
@@ -151,7 +151,7 @@ export function FittingFooter({
                     whileTap={isSelectable ? { scale: 0.95 } : {}}
                     whileHover={isSelectable ? { y: -2 } : {}}
                   >
-                    {size.size_value}
+                    {size.size || size.size_value}
                     {isSelected && (
                       <motion.div
                         className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-white flex items-center justify-center"
@@ -207,7 +207,7 @@ export function FittingFooter({
           whileHover={canPurchase && !isProcessing ? { y: -1 } : {}}
         >
           <ShoppingBag size={14} />
-          <span>Add to Cart</span>
+          <span>장바구니</span>
         </motion.button>
 
         {/* Buy Now */}
@@ -252,7 +252,7 @@ export function FittingFooter({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 />
-                <span>Processing</span>
+                <span>처리 중</span>
               </motion.div>
             ) : (
               <motion.div
@@ -263,7 +263,7 @@ export function FittingFooter({
                 exit={{ opacity: 0 }}
               >
                 <CreditCard size={14} />
-                <span>Buy Now</span>
+                <span>바로 구매</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -283,13 +283,13 @@ export function FittingFooter({
       <AnimatePresence>
         {hasSizes && !selectedProductId && (
           <motion.p
-            className="text-center text-[10px] font-mono text-white/30 tracking-wider"
+            className="text-center text-[10px] text-white/30 tracking-wider"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ delay: 0.8 }}
           >
-            Please select a size to continue
+            사이즈를 선택해주세요
           </motion.p>
         )}
       </AnimatePresence>

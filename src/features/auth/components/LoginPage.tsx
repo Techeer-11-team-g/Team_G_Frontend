@@ -160,8 +160,8 @@ export function LoginPage() {
 
       login(
         { user_id: response.user.user_id, username: response.user.username, email: response.user.email },
-        response.access,
-        response.refresh
+        response.tokens.access,
+        response.tokens.refresh
       );
 
       try {

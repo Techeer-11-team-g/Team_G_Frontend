@@ -188,10 +188,10 @@ export const ProductGrid = memo(function ProductGrid({
           <AgentProductCard
             key={product.product_id ?? i}
             product={product}
-            index={i}
+            index={(product as { index?: number }).index ?? i + 1}
             onTryOn={() => onTryOn(product)}
-            onAddToCart={(size, qty) => onAddToCart(i, size, qty)}
-            onBuy={(size, qty) => onBuy(i, size, qty)}
+            onAddToCart={(size, qty) => onAddToCart((product as { index?: number }).index ?? i + 1, size, qty)}
+            onBuy={(size, qty) => onBuy((product as { index?: number }).index ?? i + 1, size, qty)}
             isProcessing={false}
           />
         ))}
