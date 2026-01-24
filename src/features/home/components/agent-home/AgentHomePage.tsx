@@ -57,6 +57,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
   const [agentMessage, setAgentMessage] = useState(AGENT_MESSAGES.idle[0]);
   const [showParticleBurst, setShowParticleBurst] = useState(false);
   const [textQuery, setTextQuery] = useState('');
+  const [lastUserQuery, setLastUserQuery] = useState(''); // 사용자 입력 저장
   const [showImageAnalysis, setShowImageAnalysis] = useState(false);
   const [showFittingResult, setShowFittingResult] = useState(false);
   const progressStepRef = useRef(0);
@@ -87,6 +88,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
     language: 'ko-KR',
     onResult: (transcript) => {
       if (transcript.trim()) {
+        setLastUserQuery(transcript.trim());
         sendMessage(transcript.trim());
       }
     },
@@ -103,12 +105,15 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
     if (chatAgentState === 'idle') {
       setAgentMessage(AGENT_MESSAGES.idle[Math.floor(Math.random() * AGENT_MESSAGES.idle.length)]);
       setCurrentRequestType('idle');
-    } else if (chatAgentState === 'thinking') {
-      const messages = PROGRESS_MESSAGES[currentRequestType]?.thinking || AGENT_MESSAGES.thinking;
-      setAgentMessage(messages[0]);
-    } else if (chatAgentState === 'searching') {
-      const messages = PROGRESS_MESSAGES[currentRequestType]?.searching || AGENT_MESSAGES.searching;
-      setAgentMessage(messages[0]);
+      setLastUserQuery('');
+    } else if (chatAgentState === 'thinking' || chatAgentState === 'searching') {
+      // 사용자 입력을 포함한 메시지 표시
+      if (lastUserQuery) {
+        setAgentMessage(`"${lastUserQuery}" 요청 처리 중...`);
+      } else {
+        const messages = PROGRESS_MESSAGES[currentRequestType]?.thinking || AGENT_MESSAGES.thinking;
+        setAgentMessage(messages[0]);
+      }
     } else if (chatAgentState === 'presenting') {
       setShowParticleBurst(true);
       setTimeout(() => {
@@ -120,7 +125,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
     } else if (chatAgentState === 'error') {
       setAgentMessage(AGENT_MESSAGES.error[0]);
     }
-  }, [chatAgentState, currentRequestType, setCurrentRequestType]);
+  }, [chatAgentState, currentRequestType, setCurrentRequestType, lastUserQuery]);
 
   // Cycle through progress messages while processing
   useEffect(() => {
@@ -223,6 +228,8 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
     const query = textQuery.trim();
     const imageFile = pendingImageFile;
 
+    // 사용자 입력 저장 (이미지만 있는 경우 "이미지 분석"으로 표시)
+    setLastUserQuery(query || (imageFile ? '이미지 분석' : ''));
     setCurrentRequestType(getRequestType(query, !!imageFile));
 
     setTextQuery('');
@@ -271,6 +278,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
     if (size) message += ` ${size}사이즈`;
     if (qty && qty > 1) message += ` ${qty}개`;
     message += ' 담아줘';
+    setLastUserQuery(message);
     await sendMessage(message);
   };
 
@@ -285,6 +293,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
     if (size) message += ` ${size}사이즈`;
     if (qty && qty > 1) message += ` ${qty}개`;
     message += ' 바로 주문할게';
+    setLastUserQuery(message);
     await sendMessage(message);
   };
 

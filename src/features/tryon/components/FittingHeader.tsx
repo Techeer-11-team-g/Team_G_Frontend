@@ -62,12 +62,12 @@ export function FittingHeader({ onClose }: FittingHeaderProps) {
         {/* Title */}
         <div className="flex flex-col">
           <motion.span
-            className="text-[11px] font-mono text-white/40 tracking-[0.2em] uppercase"
+            className="text-[11px] font-mono text-white/40 tracking-[0.15em]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            Fitting Agent
+            피팅 에이전트
           </motion.span>
           <motion.h1
             className="text-sm font-light text-white/90 tracking-wide"
@@ -75,7 +75,7 @@ export function FittingHeader({ onClose }: FittingHeaderProps) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            Virtual Try-On
+            가상 피팅
           </motion.h1>
         </div>
       </motion.div>

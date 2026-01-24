@@ -27,12 +27,14 @@ function CartItemCard({
   onRemove,
   isRemoving,
   formatPrice,
+  layoutId,
 }: {
   item: CartItemType;
   index: number;
   onRemove: (id: number) => void;
   isRemoving: boolean;
   formatPrice: (price: number) => string;
+  layoutId: string;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
@@ -78,6 +80,7 @@ function CartItemCard({
   return (
     <motion.div
       className="relative"
+      layoutId={layoutId}
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{
@@ -408,6 +411,7 @@ export function CartPage() {
                     {items.map((item, index) => (
                       <CartItemCard
                         key={item.cart_item_id}
+                        layoutId={`cart-item-${item.cart_item_id}`}
                         item={item}
                         index={index}
                         onRemove={removeFromCart}

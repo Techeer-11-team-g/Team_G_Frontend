@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { haptic, easings, springs } from '@/motion';
@@ -23,6 +23,19 @@ export function FittingPreview({
   const containerRef = useRef<HTMLDivElement>(null);
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageAspectRatio, setImageAspectRatio] = useState<number>(4 / 3); // default 3:4 (height/width)
+
+  // Load user photo to get its natural dimensions
+  useEffect(() => {
+    if (!userPhoto) return;
+    const img = new Image();
+    img.onload = () => {
+      // Calculate aspect ratio as height/width for paddingBottom percentage
+      const ratio = (img.naturalHeight / img.naturalWidth) * 100;
+      setImageAspectRatio(ratio);
+    };
+    img.src = userPhoto;
+  }, [userPhoto]);
 
   // Slider drag handling
   const handleSliderDrag = useCallback(
@@ -93,8 +106,8 @@ export function FittingPreview({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleMouseUp}
       >
-        {/* Aspect Ratio Container */}
-        <div className="relative w-full" style={{ paddingBottom: '133%' }}>
+        {/* Aspect Ratio Container - adapts to user photo dimensions */}
+        <div className="relative w-full" style={{ paddingBottom: `${imageAspectRatio}%` }}>
           {/* Before Image (User Photo) - Always visible */}
           <motion.div
             className="absolute inset-0"
@@ -106,7 +119,7 @@ export function FittingPreview({
               src={userPhoto}
               alt="Original"
               className={cn(
-                'w-full h-full object-cover',
+                'w-full h-full object-contain',
                 isGenerating && 'blur-sm scale-[1.02]'
               )}
               style={{
@@ -129,7 +142,7 @@ export function FittingPreview({
               <motion.img
                 src={fittingResult}
                 alt="Fitting result"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 initial={{ scale: 1.1, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.8, ease: easings.smooth }}
@@ -292,8 +305,8 @@ export function FittingPreview({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, ...springs.gentle }}
               >
-                <span className="text-[10px] font-mono text-white/70 tracking-wider uppercase">
-                  Before
+                <span className="text-[10px] text-white/70 tracking-wider">
+                  원본
                 </span>
               </motion.div>
               <motion.div
@@ -306,8 +319,8 @@ export function FittingPreview({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7, ...springs.gentle }}
               >
-                <span className="text-[10px] font-mono text-white/90 tracking-wider uppercase">
-                  After
+                <span className="text-[10px] text-white/90 tracking-wider">
+                  피팅
                 </span>
               </motion.div>
             </>
@@ -341,7 +354,7 @@ export function FittingPreview({
                 }}
                 className={cn(
                   'px-6 py-2.5 rounded-full',
-                  'text-[11px] font-mono uppercase tracking-[0.15em]',
+                  'text-[11px] tracking-wider',
                   'transition-all duration-300',
                   viewMode === mode
                     ? 'bg-white/10 text-white/90 shadow-[0_0_20px_rgba(255,255,255,0.1)]'
@@ -349,7 +362,7 @@ export function FittingPreview({
                 )}
                 whileTap={{ scale: 0.95 }}
               >
-                {mode}
+                {mode === 'before' ? '원본' : '피팅'}
               </motion.button>
             ))}
           </div>
@@ -359,12 +372,12 @@ export function FittingPreview({
       {/* Drag Hint */}
       {fittingResult && !isGenerating && !isDragging && (
         <motion.p
-          className="text-center text-[10px] font-mono text-white/30 tracking-wider"
+          className="text-center text-[10px] text-white/30 tracking-wider"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.5, 0] }}
           transition={{ delay: 1.5, duration: 2, repeat: 2 }}
         >
-          Drag to compare
+          드래그해서 비교하기
         </motion.p>
       )}
     </div>

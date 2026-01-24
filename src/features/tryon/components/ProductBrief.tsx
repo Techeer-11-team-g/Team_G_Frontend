@@ -138,7 +138,7 @@ export function ProductBrief({
             >
               <Sparkles size={16} />
             </motion.div>
-            <span>Start Virtual Try-On</span>
+            <span>가상 피팅 시작</span>
 
             {/* Shimmer effect */}
             <motion.div
@@ -182,14 +182,14 @@ export function ProductBrief({
               whileHover={{ y: -1 }}
             >
               <RefreshCw size={14} />
-              <span>Try Again</span>
+              <span>다시 시도</span>
             </motion.button>
 
             <motion.button
               onClick={handleTryOther}
               className={cn(
                 'flex-1 py-4 rounded-xl',
-                'text-[11px] font-mono uppercase tracking-[0.15em]',
+                'text-[11px] tracking-wider',
                 'flex items-center justify-center gap-2',
                 // Glassmorphism button
                 'bg-white/[0.03] backdrop-blur-sm',
@@ -202,7 +202,7 @@ export function ProductBrief({
               whileTap={{ scale: 0.98 }}
               whileHover={{ y: -1 }}
             >
-              <span>Browse More</span>
+              <span>다른 상품</span>
               <ArrowRight size={14} />
             </motion.button>
           </motion.div>
@@ -243,12 +243,12 @@ export function ProductBrief({
             <Info size={12} className="text-white/40" />
           </motion.div>
           <div className="flex-1">
-            <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.15em] mb-1">
-              Agent Note
+            <p className="text-[10px] text-white/40 tracking-wider mb-1">
+              안내
             </p>
             <p className="text-xs text-white/50 leading-relaxed font-light">
-              Virtual try-on uses AI to simulate how clothing fits your body.
-              Results are for reference and may differ from actual wear.
+              가상 피팅은 AI가 옷이 어떻게 어울리는지 시뮬레이션합니다.
+              실제 착용 시와 다를 수 있으니 참고용으로 활용해주세요.
             </p>
           </div>
         </div>

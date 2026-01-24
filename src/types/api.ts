@@ -46,8 +46,10 @@ export interface GoogleLoginRequest {
 
 /** Google 로그인 응답 */
 export interface GoogleLoginResponse {
-  access: string;
-  refresh: string;
+  tokens: {
+    access: string;
+    refresh: string;
+  };
   user: {
     user_id: number;
     username: string;

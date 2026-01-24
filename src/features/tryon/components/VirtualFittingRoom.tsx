@@ -148,7 +148,7 @@ export function VirtualFittingRoom({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  Full Body Photo Required
+                  전신 사진이 필요합니다
                 </motion.h3>
                 <motion.p
                   className="text-sm text-white/40 font-light leading-relaxed"
@@ -156,7 +156,7 @@ export function VirtualFittingRoom({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
                 >
-                  To use virtual try-on, please register a full body photo in your profile first.
+                  가상 피팅을 이용하려면 프로필에서 전신 사진을 먼저 등록해주세요.
                 </motion.p>
               </div>
 
@@ -177,7 +177,7 @@ export function VirtualFittingRoom({
                 whileTap={{ scale: 0.98 }}
                 whileHover={{ y: -2 }}
               >
-                Go to Profile
+                프로필로 이동
               </motion.button>
             </motion.div>
           </main>
@@ -226,15 +226,15 @@ export function VirtualFittingRoom({
                 >
                   <AgentOrb state="thinking" size="sm" showPulse={false} />
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-mono text-white/40 tracking-[0.15em] uppercase">
-                      Fitting Agent
+                    <span className="text-[10px] text-white/40 tracking-wider">
+                      피팅 에이전트
                     </span>
                     <motion.span
                       className="text-xs text-white/70 font-light"
                       animate={{ opacity: [0.7, 1, 0.7] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
-                      Processing your request
+                      요청 처리 중
                     </motion.span>
                   </div>
                   <motion.div
