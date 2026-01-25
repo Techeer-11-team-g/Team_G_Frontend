@@ -60,6 +60,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
   const [lastUserQuery, setLastUserQuery] = useState(''); // 사용자 입력 저장
   const [showImageAnalysis, setShowImageAnalysis] = useState(false);
   const [showFittingResult, setShowFittingResult] = useState(false);
+  const [directFittingResultUrl, setDirectFittingResultUrl] = useState<string | null>(null);
   const progressStepRef = useRef(0);
 
   // Custom hooks
@@ -432,12 +433,9 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
             onProductSelect={() => {
               haptic('tap');
             }}
-            onAddToCart={(index) => {
-              handleAddToCart(index);
-            }}
-            onTryOn={(product) => {
+            onFittingResult={(imageUrl) => {
+              setDirectFittingResultUrl(imageUrl);
               setShowImageAnalysis(false);
-              setTryOnProduct(chatProductToCandidate(product, (product.index || 1) - 1));
             }}
             onClose={() => {
               setShowImageAnalysis(false);
@@ -483,6 +481,50 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
             onAddToCart={() => sendMessage('장바구니에 담아줘')}
             onOrder={() => sendMessage('바로 주문할게')}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Direct Fitting Result Modal (from ProductBottomSheet/SidePanel) */}
+      <AnimatePresence>
+        {directFittingResultUrl && (
+          <motion.div
+            className="fixed inset-0 z-50 flex flex-col bg-black/95"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex items-center justify-between p-4">
+              <h2 className="font-semibold text-white">피팅 결과</h2>
+              <motion.button
+                onClick={() => setDirectFittingResultUrl(null)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-xl text-white">&times;</span>
+              </motion.button>
+            </div>
+            <div className="flex flex-1 items-center justify-center overflow-hidden p-4">
+              <motion.img
+                src={directFittingResultUrl}
+                alt="Fitting result"
+                className="max-h-full max-w-full rounded-2xl object-contain"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', damping: 20 }}
+                style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+              />
+            </div>
+            <div className="p-4 pb-8">
+              <motion.button
+                onClick={() => setDirectFittingResultUrl(null)}
+                className="mx-auto block w-full max-w-md rounded-xl bg-white py-3 text-sm font-medium text-black"
+                whileTap={{ scale: 0.98 }}
+              >
+                닫기
+              </motion.button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
