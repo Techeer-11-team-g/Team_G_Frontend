@@ -13,8 +13,7 @@ interface ImageAnalysisViewProps {
   imageUrl: string;
   products: ChatProduct[];
   onProductSelect: (product: ChatProduct) => void;
-  onAddToCart: (index: number) => void;
-  onTryOn: (product: ChatProduct) => void;
+  onFittingResult?: (imageUrl: string) => void;
   onClose: () => void;
   /** Optional: Image ID for visibility toggle */
   uploadedImageId?: number;
@@ -28,8 +27,7 @@ export function ImageAnalysisView({
   imageUrl,
   products,
   onProductSelect,
-  onAddToCart,
-  onTryOn,
+  onFittingResult,
   onClose,
   uploadedImageId,
   onVisibilitySet,
@@ -225,8 +223,7 @@ export function ImageAnalysisView({
                 selectedProductId={selectedProductId}
                 selectedProduct={selectedProduct}
                 onProductSelect={setSelectedProductId}
-                onTryOn={onTryOn}
-                onAddToCart={onAddToCart}
+                onFittingResult={onFittingResult}
                 onDismiss={() => {
                   setShowProductPanel(false);
                   setSelectedProductId(null);
@@ -242,8 +239,7 @@ export function ImageAnalysisView({
             hoveredProductId={hoveredProductId}
             onProductSelect={setSelectedProductId}
             onProductHover={setHoveredProductId}
-            onTryOn={onTryOn}
-            onAddToCart={onAddToCart}
+            onFittingResult={onFittingResult}
           />
         )}
 

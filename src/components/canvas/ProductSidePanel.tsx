@@ -1,8 +1,17 @@
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { ShoppingBag, Shirt } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { haptic, springs } from '@/motion';
+import { toast } from 'sonner';
+import { cartApi, fittingApi } from '@/api';
+import { useUserStore } from '@/store';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ChatProduct } from '@/types/api';
+
+// Polling constants for fitting
+const POLLING_INTERVAL = 3000;
+const MAX_POLLING_ATTEMPTS = 20;
 
 interface ProductSidePanelProps {
   products: ChatProduct[];
@@ -10,8 +19,7 @@ interface ProductSidePanelProps {
   hoveredProductId: number | null;
   onProductSelect: (productId: number) => void;
   onProductHover: (productId: number | null) => void;
-  onTryOn: (product: ChatProduct) => void;
-  onAddToCart: (index: number) => void;
+  onFittingResult?: (imageUrl: string) => void;
 }
 
 export function ProductSidePanel({
@@ -20,18 +28,124 @@ export function ProductSidePanel({
   hoveredProductId,
   onProductSelect,
   onProductHover,
-  onTryOn,
-  onAddToCart,
+  onFittingResult,
 }: ProductSidePanelProps) {
+  const queryClient = useQueryClient();
+  const { userImageUrl } = useUserStore();
+
+  // Size selection state (per product)
+  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({});
+
+  // Loading states (per product)
+  const [addingToCart, setAddingToCart] = useState<number | null>(null);
+  const [fittingProduct, setFittingProduct] = useState<number | null>(null);
+
+  // Get sizes for a product
+  const getProductSizes = useCallback((product: ChatProduct) => {
+    if (!product.sizes) return [];
+    return product.sizes.map((s) =>
+      typeof s === 'object' && s !== null && 'size' in s
+        ? (s as { size: string }).size
+        : String(s)
+    );
+  }, []);
+
+  // Add to cart handler
+  const handleAddToCart = useCallback(async (e: React.MouseEvent, product: ChatProduct) => {
+    e.stopPropagation();
+
+    const sizes = getProductSizes(product);
+    const selectedSize = selectedSizes[product.product_id];
+
+    // Require size selection if sizes are available
+    if (sizes.length > 0 && !selectedSize) {
+      toast.error('사이즈를 선택해주세요');
+      return;
+    }
+
+    setAddingToCart(product.product_id);
+    haptic('tap');
+
+    try {
+      await cartApi.add({
+        selected_product_id: product.product_id,
+        quantity: 1,
+      });
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('장바구니에 담았어요');
+      haptic('success');
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      toast.error('장바구니 담기에 실패했어요');
+      haptic('error');
+    } finally {
+      setAddingToCart(null);
+    }
+  }, [selectedSizes, getProductSizes, queryClient]);
+
+  // Fitting handler
+  const handleFitting = useCallback(async (e: React.MouseEvent, product: ChatProduct) => {
+    e.stopPropagation();
+
+    if (!userImageUrl) {
+      toast.error('전신 사진을 먼저 등록해주세요');
+      haptic('error');
+      return;
+    }
+
+    setFittingProduct(product.product_id);
+    haptic('tap');
+
+    try {
+      const startResponse = await fittingApi.request({
+        product_id: product.product_id,
+        user_image_url: userImageUrl,
+      });
+
+      const fittingId = startResponse.fitting_image_id;
+
+      // Check if already done
+      if (startResponse.fitting_image_status === 'DONE' && startResponse.fitting_image_url) {
+        onFittingResult?.(startResponse.fitting_image_url);
+        toast.success('피팅이 완료됐어요!');
+        haptic('success');
+        return;
+      }
+
+      // Poll for completion
+      for (let i = 0; i < MAX_POLLING_ATTEMPTS; i++) {
+        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+
+        const statusResponse = await fittingApi.getStatus(fittingId);
+
+        if (statusResponse.fitting_image_status === 'DONE') {
+          const resultResponse = await fittingApi.getResult(fittingId);
+          onFittingResult?.(resultResponse.fitting_image_url);
+          toast.success('피팅이 완료됐어요!');
+          haptic('success');
+          return;
+        }
+      }
+
+      throw new Error('Fitting timeout');
+    } catch (error) {
+      console.error('Fitting error:', error);
+      toast.error('피팅에 실패했어요');
+      haptic('error');
+    } finally {
+      setFittingProduct(null);
+    }
+  }, [userImageUrl, onFittingResult]);
+
   return (
     <motion.div
-      className="w-80 border-l border-white/10 overflow-y-auto bg-black/50 backdrop-blur-sm"
+      className="w-80 overflow-y-auto border-l border-white/10 bg-black/50 backdrop-blur-sm"
       initial={{ x: 100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
     >
       <div className="p-4">
-        <h3 className="text-white/60 text-xs uppercase tracking-wider mb-4">
+        <h3 className="mb-4 text-xs uppercase tracking-wider text-white/60">
           Matched Products
         </h3>
 
@@ -39,12 +153,16 @@ export function ProductSidePanel({
           {products.map((product) => {
             const isSelected = selectedProductId === product.product_id;
             const isHovered = hoveredProductId === product.product_id;
+            const sizes = getProductSizes(product);
+            const selectedSize = selectedSizes[product.product_id];
+            const isAddingToCart = addingToCart === product.product_id;
+            const isFitting = fittingProduct === product.product_id;
 
             return (
               <motion.div
                 key={product.product_id}
                 className={cn(
-                  'relative rounded-xl overflow-hidden cursor-pointer transition-all',
+                  'relative cursor-pointer overflow-hidden rounded-xl transition-all',
                   isSelected && 'ring-2 ring-white/50'
                 )}
                 style={{
@@ -67,7 +185,7 @@ export function ProductSidePanel({
               >
                 {isSelected && (
                   <motion.div
-                    className="absolute inset-0 pointer-events-none"
+                    className="pointer-events-none absolute inset-0"
                     style={{
                       background:
                         'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%)',
@@ -78,18 +196,16 @@ export function ProductSidePanel({
                 )}
 
                 <div className="flex gap-3 p-3">
-                  <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg">
                     <img
                       src={product.image_url}
                       alt={product.product_name}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                     <div
-                      className="absolute top-1 left-1 w-5 h-5 rounded-full flex items-center justify-center"
+                      className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full"
                       style={{
-                        background: isSelected
-                          ? 'white'
-                          : 'rgba(255,255,255,0.9)',
+                        background: isSelected ? 'white' : 'rgba(255,255,255,0.9)',
                       }}
                     >
                       <span className="text-[10px] font-bold text-black">
@@ -98,12 +214,12 @@ export function ProductSidePanel({
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-0.5 text-[9px] uppercase tracking-wider text-white/40">
                       {product.brand_name}
                     </p>
                     <h4
-                      className="text-xs text-white/90 line-clamp-2 mb-1 cursor-pointer hover:text-white hover:underline"
+                      className="mb-1 line-clamp-2 cursor-pointer text-xs text-white/90 hover:text-white hover:underline"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (product.product_url) {
@@ -113,11 +229,11 @@ export function ProductSidePanel({
                     >
                       {product.product_name}
                     </h4>
-                    <p className="text-sm text-white font-semibold">
-                      {product.selling_price.toLocaleString()}
+                    <p className="text-sm font-semibold text-white">
+                      {product.selling_price.toLocaleString()}원
                     </p>
                     {product.category && (
-                      <p className="text-[9px] text-white/40 capitalize mt-1">
+                      <p className="mt-1 text-[9px] capitalize text-white/40">
                         {product.category}
                       </p>
                     )}
@@ -127,43 +243,86 @@ export function ProductSidePanel({
                 <AnimatePresence>
                   {isSelected && (
                     <motion.div
-                      className="flex gap-2 px-3 pb-3"
+                      className="px-3 pb-3"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                     >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          haptic('tap');
-                          onTryOn(product);
-                        }}
-                        className="flex-1 py-2 rounded-lg text-[11px] text-white font-medium flex items-center justify-center gap-1.5"
-                        style={{
-                          background: 'rgba(255,255,255,0.15)',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                        }}
-                      >
-                        <Sparkles size={12} />
-                        Try on
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          haptic('tap');
-                          if (product.index) {
-                            onAddToCart(product.index);
-                          }
-                        }}
-                        className="flex-1 py-2 rounded-lg text-[11px] text-white font-medium flex items-center justify-center gap-1.5"
-                        style={{
-                          background: 'rgba(255,255,255,0.15)',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                        }}
-                      >
-                        <ShoppingBag size={12} />
-                        Add
-                      </button>
+                      {/* Size selection */}
+                      {sizes.length > 0 && (
+                        <div className="mb-3">
+                          <p className="mb-1.5 text-[9px] text-white/50">사이즈 선택</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {sizes.map((size) => (
+                              <button
+                                key={size}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSizes((prev) => ({
+                                    ...prev,
+                                    [product.product_id]: size,
+                                  }));
+                                  haptic('tap');
+                                }}
+                                className={cn(
+                                  'rounded-md px-2 py-1 text-[10px] font-medium transition-all',
+                                  selectedSize === size
+                                    ? 'bg-white text-black'
+                                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                )}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => handleFitting(e, product)}
+                          disabled={isFitting}
+                          className={cn(
+                            'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-medium',
+                            isFitting
+                              ? 'cursor-not-allowed bg-white/10 text-white/40'
+                              : 'border border-purple-500/30 bg-purple-500/20 text-purple-300'
+                          )}
+                        >
+                          {isFitting ? (
+                            <motion.div
+                              className="h-3 w-3 rounded-full border-2 border-purple-300/30 border-t-purple-300"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                            />
+                          ) : (
+                            <Shirt size={12} />
+                          )}
+                          {isFitting ? '피팅 중...' : 'Try on'}
+                        </button>
+                        <button
+                          onClick={(e) => handleAddToCart(e, product)}
+                          disabled={(sizes.length > 0 && !selectedSize) || isAddingToCart}
+                          className={cn(
+                            'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-medium',
+                            (sizes.length > 0 && !selectedSize) || isAddingToCart
+                              ? 'cursor-not-allowed bg-white/10 text-white/40'
+                              : 'border border-white/20 bg-white/15 text-white'
+                          )}
+                        >
+                          {isAddingToCart ? (
+                            <motion.div
+                              className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                            />
+                          ) : (
+                            <ShoppingBag size={12} />
+                          )}
+                          {isAddingToCart ? '담는 중...' : 'Add'}
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
