@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
@@ -21,6 +21,15 @@ import { userImagesApi, usersApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { haptic, easings, springs, containerVariants, itemVariants, durations } from '@/motion';
 import { MainHeader } from '@/components/layout';
+
+// Ensure URL uses HTTPS in production (prevent mixed content issues)
+function ensureHttps(url: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith('http://') && typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    return url.replace('http://', 'https://');
+  }
+  return url;
+}
 
 interface UserProfile {
   name: string;
@@ -135,8 +144,16 @@ export function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('user_profile');
     const parsed = saved ? JSON.parse(saved) : null;
+    const googleName = localStorage.getItem('google_user_name');
+
+    // For Google users, prefer Google name over username (which is like "google_123456...")
+    const isGoogleUser = user?.user_name?.startsWith('google_');
+    const displayName = isGoogleUser && googleName
+      ? googleName
+      : (user?.user_name || parsed?.name || 'Guest');
+
     return {
-      name: user?.user_name || parsed?.name || 'Guest',
+      name: displayName,
       email: user?.user_email || parsed?.email || '',
       phone: user?.phone_number || parsed?.phone || '',
       photo: parsed?.photo || localStorage.getItem('user_profile_photo'),
@@ -147,8 +164,22 @@ export function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(profile);
-  const [fullBodyPhoto, setFullBodyPhoto] = useState<string | null>(userImageUrl);
+  // Initialize from store or localStorage fallback, ensuring HTTPS
+  const [fullBodyPhoto, setFullBodyPhoto] = useState<string | null>(() => {
+    const storeUrl = userImageUrl;
+    const localUrl = localStorage.getItem('user_full_body_photo');
+    return ensureHttps(storeUrl || localUrl);
+  });
   const [isUploadingFullBody, setIsUploadingFullBody] = useState(false);
+
+  // Sync fullBodyPhoto with store when it hydrates (Zustand persist is async)
+  useEffect(() => {
+    const secureUrl = ensureHttps(userImageUrl);
+    if (secureUrl && secureUrl !== fullBodyPhoto) {
+      setFullBodyPhoto(secureUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userImageUrl]);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -194,8 +225,9 @@ export function ProfilePage() {
     setIsUploadingFullBody(true);
     try {
       const result = await userImagesApi.upload(file);
-      setUserImageUrl(result.user_image_url);
-      localStorage.setItem('user_full_body_photo', result.user_image_url);
+      const secureUrl = ensureHttps(result.user_image_url) || result.user_image_url;
+      setUserImageUrl(secureUrl);
+      localStorage.setItem('user_full_body_photo', secureUrl);
       haptic('success');
       toast.success('전신 사진이 업로드되었습니다');
     } catch (error) {
@@ -246,6 +278,7 @@ export function ProfilePage() {
     localStorage.removeItem('user_profile');
     localStorage.removeItem('user_profile_photo');
     localStorage.removeItem('user_full_body_photo');
+    localStorage.removeItem('google_user_name');
     navigate('/');
   };
 
@@ -548,6 +581,14 @@ export function ProfilePage() {
                           src={fullBodyPhoto}
                           alt="Full body"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Full body image load failed:', fullBodyPhoto);
+                            // Try to load from localStorage as fallback
+                            const fallbackUrl = localStorage.getItem('user_full_body_photo');
+                            if (fallbackUrl && fallbackUrl !== fullBodyPhoto) {
+                              (e.target as HTMLImageElement).src = fallbackUrl;
+                            }
+                          }}
                         />
                         {/* Overlay on hover */}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

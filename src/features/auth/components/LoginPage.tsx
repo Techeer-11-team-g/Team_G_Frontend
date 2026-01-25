@@ -9,6 +9,23 @@ import { useAuthStore, useUserStore } from '@/store';
 import { cn } from '@/utils/cn';
 import { haptic, easings, springs } from '@/motion';
 
+// Decode JWT token to get Google user info
+function decodeGoogleToken(token: string): { name?: string; email?: string; picture?: string } | null {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
 // Magnetic Input Component
 function MagneticInput({
   type = 'text',
@@ -153,6 +170,10 @@ export function LoginPage() {
     setIsLoading(true);
     haptic('tap');
 
+    // Decode Google token to get real name
+    const googleUserInfo = decodeGoogleToken(credentialResponse.credential);
+    const googleName = googleUserInfo?.name || googleUserInfo?.email?.split('@')[0] || '';
+
     try {
       const response = await authApi.googleLogin({
         id_token: credentialResponse.credential,
@@ -163,6 +184,11 @@ export function LoginPage() {
         response.tokens.access,
         response.tokens.refresh
       );
+
+      // Store Google name for profile display
+      if (googleName) {
+        localStorage.setItem('google_user_name', googleName);
+      }
 
       try {
         const userProfile = await usersApi.getProfile();

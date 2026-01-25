@@ -394,6 +394,8 @@ function EditorialStepItem({ step, index }: { step: (typeof WORKFLOW_STEPS)[0]; 
           <img
             src={Object.values(EDITORIAL_IMAGES)[index]}
             alt="Fashion"
+            loading="lazy"
+            decoding="async"
             className="h-auto w-full object-cover opacity-70"
           />
         </div>
