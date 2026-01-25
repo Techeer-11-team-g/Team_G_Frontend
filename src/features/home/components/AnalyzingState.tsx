@@ -1,4 +1,9 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { lazy, Suspense } from 'react';
+
+// Lazy load Lottie component - only loads when AnalyzingState is rendered
+const DotLottieReact = lazy(() =>
+  import('@lottiefiles/dotlottie-react').then((m) => ({ default: m.DotLottieReact }))
+);
 
 interface AnalyzingStateProps {
   status?: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | null;
@@ -12,19 +17,30 @@ const STATUS_MESSAGES: Record<string, string> = {
   ERROR: '분석 실패',
 };
 
+// Simple loading fallback for Lottie
+function LottieFallback() {
+  return (
+    <div className="w-48 h-48 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full border-2 border-black/10 border-t-black/30 animate-spin" />
+    </div>
+  );
+}
+
 export function AnalyzingState({ status, progress = 0 }: AnalyzingStateProps) {
   const message = status ? STATUS_MESSAGES[status] : '준비 중';
   const displayProgress = Math.min(Math.max(progress, 0), 100);
 
   return (
     <div className="h-[60vh] flex flex-col items-center justify-center space-y-8 animate-in fade-in">
-      {/* Lottie Animation */}
+      {/* Lottie Animation - Lazy loaded */}
       <div className="w-48 h-48">
-        <DotLottieReact
-          src="/Cosmos.lottie"
-          loop
-          autoplay
-        />
+        <Suspense fallback={<LottieFallback />}>
+          <DotLottieReact
+            src="/Cosmos.lottie"
+            loop
+            autoplay
+          />
+        </Suspense>
       </div>
 
       {/* Progress Bar */}

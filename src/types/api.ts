@@ -435,6 +435,7 @@ export interface FeedUser {
 export interface FeedProductSize {
   size_code_id: number;
   size_value: string;
+  selected_product_id: number;
 }
 
 /** 피드 매칭 상품 */

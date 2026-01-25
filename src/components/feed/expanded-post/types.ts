@@ -36,6 +36,7 @@ export interface ChatProductPanelState {
 export interface ProductPanelState {
   selectedObjectId: number | null;
   selectedSizeCodeId: number | null;
+  selectedProductId: number | null; // selected_product_id for cart API
   isToggling: boolean;
   isAddingToCart: boolean;
   isPurchasing: boolean;
@@ -56,7 +57,7 @@ export interface ProductPanelProps {
   isPurchasing: boolean;
   isFitting: boolean;
   onClose: () => void;
-  onSizeSelect: (sizeCodeId: number) => void;
+  onSizeSelect: (sizeCodeId: number, selectedProductId: number) => void;
   onAddToCart: () => void;
   onPurchase: () => void;
   onFitting: () => void;

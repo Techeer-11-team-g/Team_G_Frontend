@@ -87,7 +87,7 @@ export const ProductPanel = memo(function ProductPanel({
                       {availableSizes?.map((size) => (
                         <motion.button
                           key={size.size_code_id}
-                          onClick={() => onSizeSelect(size.size_code_id)}
+                          onClick={() => onSizeSelect(size.size_code_id, size.selected_product_id)}
                           className={cn(
                             'rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                             selectedSizeCodeId === size.size_code_id
