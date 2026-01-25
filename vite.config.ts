@@ -34,7 +34,7 @@ export default defineConfig({
           'vendor-query': ['@tanstack/react-query'],
           'vendor-ui': ['framer-motion', 'lucide-react'],
           // Heavy libraries - load only when needed
-          'vendor-3d': ['@splinetool/react-spline', '@splinetool/runtime'],
+          // vendor-3d removed - @splinetool not used in codebase
           'vendor-animation': ['gsap'],
           // vendor-lottie removed - now dynamically imported in AnalyzingState
           'vendor-google-auth': ['@react-oauth/google'],

@@ -13,8 +13,8 @@ import { haptic, springs } from '@/motion';
 // Configuration
 // =============================================
 const CONFIG = {
-  // Animation timing (ms)
-  initialDelay: 300,
+  // Animation timing (ms) - reduced for better LCP
+  initialDelay: 100,
 
   // Typography
   letterSpacing: '-0.02em',
@@ -39,16 +39,16 @@ export function NewHomePage() {
   const [showFeed, setShowFeed] = useState(!isFirstVisit);
   const [currentView, setCurrentView] = useState<'feed' | 'agent'>('feed');
 
-  // Animation sequence - only on first visit
+  // Animation sequence - only on first visit (reduced delay for better LCP)
   useEffect(() => {
     if (isFirstVisit) {
-      // Show feed after delay
+      // Show feed after minimal delay for better LCP
       const feedTimer = setTimeout(() => {
         setShowFeed(true);
         // Mark as visited after animation completes
         sessionStorage.setItem(VISITED_KEY, 'true');
         setIsFirstVisit(false);
-      }, CONFIG.initialDelay + 1000);
+      }, CONFIG.initialDelay + 400); // Reduced from 1000ms to 400ms
 
       return () => {
         clearTimeout(feedTimer);

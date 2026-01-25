@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Globe } from 'lucide-react';
 import { feedApi } from '@/api';
@@ -10,6 +10,22 @@ import { ExpandedPostView } from './ExpandedPostView';
 import type { FeedItem, StyleOption } from '@/types/api';
 
 type FeedTab = 'discover' | 'history';
+
+// Skeleton card for loading state - styled to match real cards
+const SkeletonCard = memo(function SkeletonCard({ index }: { index: number }) {
+  // Vary heights like real Pinterest cards
+  const heights = [180, 220, 200, 240, 190, 210];
+  const height = heights[index % heights.length];
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl bg-zinc-900"
+      style={{ height }}
+    >
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-zinc-800 to-zinc-900" />
+    </div>
+  );
+});
 
 export interface PinterestFeedProps {
   className?: string;
@@ -27,7 +43,7 @@ function distributeIntoColumns<T>(items: T[], columnCount: number): T[][] {
 export function PinterestFeed({ className }: PinterestFeedProps) {
   const [activeTab, setActiveTab] = useState<FeedTab>('discover');
   const [items, setItems] = useState<FeedItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start true for immediate skeleton display
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [columnCount, setColumnCount] = useState(2);
   const [styles, setStyles] = useState<StyleOption[]>([]);
@@ -197,17 +213,15 @@ export function PinterestFeed({ className }: PinterestFeedProps) {
       {/* Pinterest Grid */}
       <div className="px-4">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-20">
-            <motion.div
-              className="h-10 w-10 rounded-full"
-              style={{
-                border: '2px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'rgba(255,255,255,0.6)',
-              }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            />
-            <p className="text-sm text-white/30">Loading...</p>
+          // Skeleton grid - matches real grid layout for visual continuity
+          <div className="flex gap-4">
+            {Array.from({ length: columnCount }).map((_, colIndex) => (
+              <div key={colIndex} className="flex flex-1 flex-col gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <SkeletonCard key={i} index={colIndex * 3 + i} />
+                ))}
+              </div>
+            ))}
           </div>
         ) : items.length === 0 ? (
           <motion.div
@@ -243,6 +257,7 @@ export function PinterestFeed({ className }: PinterestFeedProps) {
                       key={item.id}
                       item={item}
                       isOwn={activeTab === 'history'}
+                      index={originalIndex}
                       onClick={() => {
                         haptic('tap');
                         setExpandedIndex(originalIndex);

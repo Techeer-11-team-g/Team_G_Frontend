@@ -10,6 +10,8 @@ export interface PinterestCardProps {
   onClick: () => void;
   onVisibilityToggle?: (isPublic: boolean) => void;
   isOwn: boolean;
+  /** Index in the feed list - used for loading priority */
+  index?: number;
 }
 
 export const PinterestCard = memo(function PinterestCard({
@@ -17,7 +19,10 @@ export const PinterestCard = memo(function PinterestCard({
   onClick,
   onVisibilityToggle,
   isOwn,
+  index = 0,
 }: PinterestCardProps) {
+  // First 4 images get priority loading for better LCP
+  const isPriority = index < 4;
   const [loaded, setLoaded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
@@ -62,6 +67,9 @@ export const PinterestCard = memo(function PinterestCard({
           style={{ touchAction: 'pan-y', pointerEvents: 'none' }}
           onLoad={() => setLoaded(true)}
           draggable={false}
+          loading={isPriority ? 'eager' : 'lazy'}
+          decoding={isPriority ? 'sync' : 'async'}
+          fetchPriority={index === 0 ? 'high' : undefined}
         />
 
         {/* Hover overlay */}
