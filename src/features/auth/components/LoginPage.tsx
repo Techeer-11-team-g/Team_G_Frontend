@@ -2,12 +2,14 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
-import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { GoogleOAuthProvider, GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { toast } from 'sonner';
 import { authApi, usersApi } from '@/api';
 import { useAuthStore, useUserStore } from '@/store';
 import { cn } from '@/utils/cn';
 import { haptic, easings, springs } from '@/motion';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 // Decode JWT token to get Google user info
 function decodeGoogleToken(token: string): { name?: string; email?: string; picture?: string } | null {
@@ -216,6 +218,7 @@ export function LoginPage() {
   };
 
   return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <motion.div
       className="min-h-screen bg-black text-white selection:bg-white/20 selection:text-white overflow-hidden"
       initial={{ opacity: 0 }}
@@ -478,5 +481,6 @@ export function LoginPage() {
         </div>
       </motion.footer>
     </motion.div>
+    </GoogleOAuthProvider>
   );
 }

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://storage.googleapis.com" />
+    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
     <link rel="dns-prefetch" href="https://teamg-api.duckdns.org" />
 
     <!-- Critical inline styles for initial render -->
@@ -38,7 +38,8 @@
 
         // Use requestIdleCallback or setTimeout fallback
         var loadFonts = function() {
-          loadStylesheet('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+          // Use subset version - Korean + Latin only (~90KB vs ~3MB full)
+          loadStylesheet('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-subset.min.css');
           loadStylesheet('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
         };
 
