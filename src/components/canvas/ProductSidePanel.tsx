@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { cartApi, fittingApi } from '@/api';
 import { useUserStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ChatProduct } from '@/types/api';
+import type { ChatProduct, ProductSize } from '@/types/api';
 
 // Polling constants for fitting
 const POLLING_INTERVAL = 3000;
@@ -33,32 +33,37 @@ export function ProductSidePanel({
   const queryClient = useQueryClient();
   const { userImageUrl } = useUserStore();
 
-  // Size selection state (per product)
-  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({});
+  // Size selection state (per product) - stores full ProductSize or string
+  const [selectedSizeData, setSelectedSizeData] = useState<Record<number, ProductSize | string>>({});
 
   // Loading states (per product)
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [fittingProduct, setFittingProduct] = useState<number | null>(null);
 
-  // Get sizes for a product
-  const getProductSizes = useCallback((product: ChatProduct) => {
-    if (!product.sizes) return [];
-    return product.sizes.map((s) =>
-      typeof s === 'object' && s !== null && 'size' in s
-        ? (s as { size: string }).size
-        : String(s)
-    );
-  }, []);
+  // Get display value for a size
+  const getSizeDisplayValue = (size: ProductSize | string): string => {
+    if (typeof size === 'string') return size;
+    return size.size_value || size.size || '';
+  };
+
+  // Get selected_product_id from size data
+  const getSelectedProductIdFromSize = (sizeData: ProductSize | string | undefined): number | null => {
+    if (!sizeData) return null;
+    if (typeof sizeData === 'object' && 'selected_product_id' in sizeData) {
+      return sizeData.selected_product_id;
+    }
+    return null;
+  };
 
   // Add to cart handler
   const handleAddToCart = useCallback(async (e: React.MouseEvent, product: ChatProduct) => {
     e.stopPropagation();
 
-    const sizes = getProductSizes(product);
-    const selectedSize = selectedSizes[product.product_id];
+    const hasSizes = product.sizes && product.sizes.length > 0;
+    const selectedSize = selectedSizeData[product.product_id];
 
     // Require size selection if sizes are available
-    if (sizes.length > 0 && !selectedSize) {
+    if (hasSizes && !selectedSize) {
       toast.error('사이즈를 선택해주세요');
       return;
     }
@@ -67,8 +72,11 @@ export function ProductSidePanel({
     haptic('tap');
 
     try {
+      // Use selected_product_id from size selection, fallback to product_id
+      const selectedProductId = getSelectedProductIdFromSize(selectedSize) || product.product_id;
+
       await cartApi.add({
-        selected_product_id: product.product_id,
+        selected_product_id: selectedProductId,
         quantity: 1,
       });
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -81,7 +89,7 @@ export function ProductSidePanel({
     } finally {
       setAddingToCart(null);
     }
-  }, [selectedSizes, getProductSizes, queryClient]);
+  }, [selectedSizeData, queryClient]);
 
   // Fitting handler
   const handleFitting = useCallback(async (e: React.MouseEvent, product: ChatProduct) => {
@@ -153,8 +161,8 @@ export function ProductSidePanel({
           {products.map((product) => {
             const isSelected = selectedProductId === product.product_id;
             const isHovered = hoveredProductId === product.product_id;
-            const sizes = getProductSizes(product);
-            const selectedSize = selectedSizes[product.product_id];
+            const sizeList = product.sizes || [];
+            const selectedSize = selectedSizeData[product.product_id];
             const isAddingToCart = addingToCart === product.product_id;
             const isFitting = fittingProduct === product.product_id;
 
@@ -249,31 +257,35 @@ export function ProductSidePanel({
                       exit={{ opacity: 0, height: 0 }}
                     >
                       {/* Size selection */}
-                      {sizes.length > 0 && (
+                      {sizeList.length > 0 && (
                         <div className="mb-3">
                           <p className="mb-1.5 text-[9px] text-white/50">사이즈 선택</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {sizes.map((size) => (
-                              <button
-                                key={size}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedSizes((prev) => ({
-                                    ...prev,
-                                    [product.product_id]: size,
-                                  }));
-                                  haptic('tap');
-                                }}
-                                className={cn(
-                                  'rounded-md px-2 py-1 text-[10px] font-medium transition-all',
-                                  selectedSize === size
-                                    ? 'bg-white text-black'
-                                    : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                )}
-                              >
-                                {size}
-                              </button>
-                            ))}
+                            {sizeList.map((size, idx) => {
+                              const displayValue = getSizeDisplayValue(size);
+                              const isThisSizeSelected = selectedSize && getSizeDisplayValue(selectedSize) === displayValue;
+                              return (
+                                <button
+                                  key={typeof size === 'string' ? size : size.selected_product_id || idx}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedSizeData((prev) => ({
+                                      ...prev,
+                                      [product.product_id]: size,
+                                    }));
+                                    haptic('tap');
+                                  }}
+                                  className={cn(
+                                    'rounded-md px-2 py-1 text-[10px] font-medium transition-all',
+                                    isThisSizeSelected
+                                      ? 'bg-white text-black'
+                                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                  )}
+                                >
+                                  {displayValue}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -303,10 +315,10 @@ export function ProductSidePanel({
                         </button>
                         <button
                           onClick={(e) => handleAddToCart(e, product)}
-                          disabled={(sizes.length > 0 && !selectedSize) || isAddingToCart}
+                          disabled={(sizeList.length > 0 && !selectedSize) || isAddingToCart}
                           className={cn(
                             'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-medium',
-                            (sizes.length > 0 && !selectedSize) || isAddingToCart
+                            (sizeList.length > 0 && !selectedSize) || isAddingToCart
                               ? 'cursor-not-allowed bg-white/10 text-white/40'
                               : 'border border-white/20 bg-white/15 text-white'
                           )}

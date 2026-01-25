@@ -596,7 +596,7 @@ export interface ChatProduct {
   selling_price: number;
   image_url: string;
   product_url: string;
-  sizes?: string[];
+  sizes?: ProductSize[] | string[];
   // Image analysis specific fields
   category?: string;
   confidence_score?: number;

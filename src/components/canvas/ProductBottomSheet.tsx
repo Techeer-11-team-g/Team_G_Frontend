@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { cartApi, fittingApi } from '@/api';
 import { useUserStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ChatProduct } from '@/types/api';
+import type { ChatProduct, ProductSize } from '@/types/api';
 
 // Polling constants for fitting
 const POLLING_INTERVAL = 3000;
@@ -33,27 +33,44 @@ export function ProductBottomSheet({
   const queryClient = useQueryClient();
   const { userImageUrl } = useUserStore();
 
-  // Size selection state
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  // Size selection state - stores the full ProductSize object or size string
+  const [selectedSizeData, setSelectedSizeData] = useState<ProductSize | string | null>(null);
 
   // Loading states
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isFitting, setIsFitting] = useState(false);
 
-  // Get available sizes from selected product
-  const availableSizes = useMemo(() => {
+  // Get available sizes from selected product (as ProductSize[] or string[])
+  const sizeList = useMemo(() => {
     if (!selectedProduct?.sizes) return [];
-    return selectedProduct.sizes.map((s) =>
-      typeof s === 'object' && s !== null && 'size' in s
-        ? (s as { size: string }).size
-        : String(s)
-    );
+    return selectedProduct.sizes;
   }, [selectedProduct?.sizes]);
+
+  // Get display value for a size
+  const getSizeDisplayValue = (size: ProductSize | string): string => {
+    if (typeof size === 'string') return size;
+    return size.size_value || size.size || '';
+  };
+
+  // Get selected_product_id from size selection
+  const getSelectedProductId = (): number | null => {
+    if (!selectedSizeData) return null;
+    if (typeof selectedSizeData === 'object' && 'selected_product_id' in selectedSizeData) {
+      return selectedSizeData.selected_product_id;
+    }
+    return null;
+  };
+
+  // Check if a size is selected
+  const isSizeSelected = (size: ProductSize | string): boolean => {
+    if (!selectedSizeData) return false;
+    return getSizeDisplayValue(size) === getSizeDisplayValue(selectedSizeData);
+  };
 
   // Reset size when product changes
   const handleProductSelect = useCallback((productId: number) => {
     onProductSelect(productId);
-    setSelectedSize(null);
+    setSelectedSizeData(null);
   }, [onProductSelect]);
 
   // Add to cart handler
@@ -61,7 +78,7 @@ export function ProductBottomSheet({
     if (!selectedProduct) return;
 
     // Require size selection if sizes are available
-    if (availableSizes.length > 0 && !selectedSize) {
+    if (sizeList.length > 0 && !selectedSizeData) {
       toast.error('사이즈를 선택해주세요');
       return;
     }
@@ -70,8 +87,11 @@ export function ProductBottomSheet({
     haptic('tap');
 
     try {
+      // Use selected_product_id from size selection, fallback to product_id
+      const selectedProductId = getSelectedProductId() || selectedProduct.product_id;
+
       await cartApi.add({
-        selected_product_id: selectedProduct.product_id,
+        selected_product_id: selectedProductId,
         quantity: 1,
       });
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -84,7 +104,7 @@ export function ProductBottomSheet({
     } finally {
       setIsAddingToCart(false);
     }
-  }, [selectedProduct, availableSizes.length, selectedSize, queryClient]);
+  }, [selectedProduct, sizeList.length, selectedSizeData, queryClient, getSelectedProductId]);
 
   // Fitting handler
   const handleFitting = useCallback(async () => {
@@ -189,28 +209,31 @@ export function ProductBottomSheet({
               </p>
 
               {/* Size selection */}
-              {availableSizes.length > 0 && (
+              {sizeList.length > 0 && (
                 <div className="mt-2">
                   <p className="mb-1.5 text-[10px] text-white/50">사이즈 선택</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {availableSizes.map((size) => (
-                      <motion.button
-                        key={size}
-                        onClick={() => {
-                          setSelectedSize(size);
-                          haptic('tap');
-                        }}
-                        className={cn(
-                          'rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all',
-                          selectedSize === size
-                            ? 'bg-white text-black'
-                            : 'bg-white/10 text-white/70 hover:bg-white/20'
-                        )}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {size}
-                      </motion.button>
-                    ))}
+                    {sizeList.map((size, idx) => {
+                      const displayValue = getSizeDisplayValue(size);
+                      return (
+                        <motion.button
+                          key={typeof size === 'string' ? size : size.selected_product_id || idx}
+                          onClick={() => {
+                            setSelectedSizeData(size);
+                            haptic('tap');
+                          }}
+                          className={cn(
+                            'rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all',
+                            isSizeSelected(size)
+                              ? 'bg-white text-black'
+                              : 'bg-white/10 text-white/70 hover:bg-white/20'
+                          )}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {displayValue}
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -241,10 +264,10 @@ export function ProductBottomSheet({
                 </motion.button>
                 <motion.button
                   onClick={handleAddToCart}
-                  disabled={(availableSizes.length > 0 && !selectedSize) || isAddingToCart}
+                  disabled={(sizeList.length > 0 && !selectedSizeData) || isAddingToCart}
                   className={cn(
                     'flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium',
-                    (availableSizes.length > 0 && !selectedSize) || isAddingToCart
+                    (sizeList.length > 0 && !selectedSizeData) || isAddingToCart
                       ? 'cursor-not-allowed bg-white/10 text-white/40'
                       : 'border border-white/20 bg-white/15 text-white'
                   )}
