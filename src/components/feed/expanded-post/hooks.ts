@@ -316,9 +316,10 @@ export function useChatProductActions(
 }
 
 export function useProductActions(
-  selectedProduct: { id: number; sizes?: Array<{ size_code_id: number; size_value: string }> } | null | undefined,
-  availableSizes: Array<{ size_code_id: number; size_value: string }>,
-  selectedSizeCodeId: number | null,
+  selectedProduct: { id: number; sizes?: Array<{ size_code_id: number; size_value: string; selected_product_id: number }> } | null | undefined,
+  availableSizes: Array<{ size_code_id: number; size_value: string; selected_product_id: number }>,
+  _selectedSizeCodeId: number | null, // Kept for UI display, not used in API calls
+  selectedProductId: number | null, // This is the selected_product_id for cart API
   effectiveUserImageUrl: string | null | undefined,
   setAgentMessage: (msg: string) => void,
   setFittingImageUrl: (url: string | null) => void,
@@ -332,16 +333,27 @@ export function useProductActions(
 
   const handleAddToCart = useCallback(async () => {
     if (!selectedProduct) return;
-    if (availableSizes.length > 0 && !selectedSizeCodeId) {
-      toast.error('사이즈를 선택해주세요');
-      return;
+
+    // If sizes are available, require a size selection
+    if (availableSizes.length > 0) {
+      if (!selectedProductId) {
+        toast.error('사이즈를 선택해주세요');
+        return;
+      }
     }
 
     setIsAddingToCart(true);
     haptic('tap');
 
     try {
-      const productIdToUse = selectedSizeCodeId || selectedProduct.id;
+      // Use selected_product_id from size selection, or first size's selected_product_id if no sizes
+      const productIdToUse = selectedProductId || availableSizes[0]?.selected_product_id;
+
+      if (!productIdToUse) {
+        toast.error('상품 정보를 찾을 수 없습니다');
+        return;
+      }
+
       await cartApi.add({
         selected_product_id: productIdToUse,
         quantity: 1,
@@ -354,14 +366,19 @@ export function useProductActions(
     } finally {
       setIsAddingToCart(false);
     }
-  }, [selectedProduct, availableSizes.length, selectedSizeCodeId, queryClient]);
+  }, [selectedProduct, availableSizes, selectedProductId, queryClient]);
 
   const handlePurchase = useCallback(async () => {
     if (!selectedProduct) return;
-    if (availableSizes.length > 0 && !selectedSizeCodeId) {
-      toast.error('사이즈를 선택해주세요');
-      return;
+
+    // If sizes are available, require a size selection
+    if (availableSizes.length > 0) {
+      if (!selectedProductId) {
+        toast.error('사이즈를 선택해주세요');
+        return;
+      }
     }
+
     if (!user?.user_id) {
       toast.error('로그인이 필요합니다');
       return;
@@ -371,7 +388,14 @@ export function useProductActions(
     haptic('tap');
 
     try {
-      const productIdToUse = selectedSizeCodeId || selectedProduct.id;
+      // Use selected_product_id from size selection
+      const productIdToUse = selectedProductId || availableSizes[0]?.selected_product_id;
+
+      if (!productIdToUse) {
+        toast.error('상품 정보를 찾을 수 없습니다');
+        return;
+      }
+
       const cartResponse = await cartApi.add({
         selected_product_id: productIdToUse,
         quantity: 1,
@@ -391,7 +415,7 @@ export function useProductActions(
     } finally {
       setIsPurchasing(false);
     }
-  }, [selectedProduct, availableSizes.length, selectedSizeCodeId, queryClient, user?.user_id]);
+  }, [selectedProduct, availableSizes, selectedProductId, queryClient, user?.user_id]);
 
   const handleFitting = useCallback(async () => {
     if (!selectedProduct) return;

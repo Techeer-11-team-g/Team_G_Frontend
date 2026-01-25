@@ -1,10 +1,23 @@
-import { useState, useEffect } from 'react';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { cn } from '@/utils/cn';
+
+// Lazy load Lottie component
+const DotLottieReact = lazy(() =>
+  import('@lottiefiles/dotlottie-react').then((m) => ({ default: m.DotLottieReact }))
+);
 
 interface ChatRefinementFABProps {
   onClick: () => void;
   isVisible: boolean;
+}
+
+// Simple loading fallback
+function LottieFallback() {
+  return (
+    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 rounded-full">
+      <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+    </div>
+  );
 }
 
 export function ChatRefinementFAB({ onClick, isVisible }: ChatRefinementFABProps) {
@@ -72,12 +85,14 @@ export function ChatRefinementFAB({ onClick, isVisible }: ChatRefinementFABProps
         aria-label="AI 스타일리스트 열기"
       >
         <div className="w-full h-full pointer-events-none scale-150">
-          <DotLottieReact
-            src="/ai-agent.lottie"
-            loop
-            autoplay
-            className="w-full h-full"
-          />
+          <Suspense fallback={<LottieFallback />}>
+            <DotLottieReact
+              src="/ai-agent.lottie"
+              loop
+              autoplay
+              className="w-full h-full"
+            />
+          </Suspense>
         </div>
       </div>
     </div>

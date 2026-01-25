@@ -36,7 +36,7 @@ export default defineConfig({
           // Heavy libraries - load only when needed
           'vendor-3d': ['@splinetool/react-spline', '@splinetool/runtime'],
           'vendor-animation': ['gsap'],
-          'vendor-lottie': ['@lottiefiles/dotlottie-react'],
+          // vendor-lottie removed - now dynamically imported in AnalyzingState
           'vendor-google-auth': ['@react-oauth/google'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'vendor-utils': ['axios', 'zustand', 'clsx', 'tailwind-merge', 'class-variance-authority'],

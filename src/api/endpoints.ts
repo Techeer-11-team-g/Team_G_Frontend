@@ -191,19 +191,19 @@ export const fittingApi = {
 export const cartApi = {
   /** 장바구니 조회 */
   get: async (): Promise<CartResponse> => {
-    const { data } = await apiClient.get('/api/v1/cart-items');
+    const { data } = await apiClient.get('/api/v1/cart');
     return data;
   },
 
   /** 장바구니 상품 추가 */
   add: async (request: CartAddRequest): Promise<CartAddResponse> => {
-    const { data } = await apiClient.post('/api/v1/cart-items', request);
+    const { data } = await apiClient.post('/api/v1/cart', request);
     return data;
   },
 
   /** 장바구니 상품 삭제 */
   remove: async (cartItemId: number): Promise<void> => {
-    await apiClient.delete(`/api/v1/cart-items/${cartItemId}`);
+    await apiClient.delete(`/api/v1/cart/${cartItemId}`);
   },
 };
 

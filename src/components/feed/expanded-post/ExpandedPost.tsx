@@ -33,6 +33,7 @@ export const ExpandedPost = memo(function ExpandedPost({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [selectedObjectId, setSelectedObjectId] = useState<number | null>(null);
   const [selectedSizeCodeId, setSelectedSizeCodeId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isToggling, setIsToggling] = useState(false);
 
   // Get user image URL from either store or user profile
@@ -113,6 +114,7 @@ export const ExpandedPost = memo(function ExpandedPost({
     selectedProduct,
     availableSizes,
     selectedSizeCodeId,
+    selectedProductId,
     effectiveUserImageUrl,
     setAgentMessage,
     setFittingImageUrl,
@@ -169,6 +171,7 @@ export const ExpandedPost = memo(function ExpandedPost({
     haptic('tap');
     setSelectedObjectId(objectId);
     setSelectedSizeCodeId(null);
+    setSelectedProductId(null);
   }, []);
 
   const handleVisibilityToggle = useCallback(async () => {
@@ -185,6 +188,7 @@ export const ExpandedPost = memo(function ExpandedPost({
   const handleProductPanelClose = useCallback(() => {
     setSelectedObjectId(null);
     setSelectedSizeCodeId(null);
+    setSelectedProductId(null);
   }, []);
 
   const handleChatProductPanelClose = useCallback(() => {
@@ -268,7 +272,10 @@ export const ExpandedPost = memo(function ExpandedPost({
           isPurchasing={isPurchasing}
           isFitting={isFitting}
           onClose={handleProductPanelClose}
-          onSizeSelect={setSelectedSizeCodeId}
+          onSizeSelect={(sizeCodeId, productId) => {
+            setSelectedSizeCodeId(sizeCodeId);
+            setSelectedProductId(productId);
+          }}
           onAddToCart={handleAddToCart}
           onPurchase={handlePurchase}
           onFitting={handleFitting}
