@@ -108,6 +108,10 @@ export const FeedCard = memo(function FeedCard({
           src={item.uploaded_image_url}
           alt="Feed item"
           className="absolute inset-0 w-full h-full object-cover"
+          // First few images get priority loading for LCP optimization
+          loading={index < 4 ? 'eager' : 'lazy'}
+          decoding={index < 4 ? 'sync' : 'async'}
+          fetchPriority={index === 0 ? 'high' : undefined}
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{
             opacity: loaded ? 1 : 0,

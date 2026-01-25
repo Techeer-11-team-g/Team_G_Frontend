@@ -37,6 +37,7 @@ export default defineConfig({
           'vendor-3d': ['@splinetool/react-spline', '@splinetool/runtime'],
           'vendor-animation': ['gsap'],
           'vendor-lottie': ['@lottiefiles/dotlottie-react'],
+          'vendor-google-auth': ['@react-oauth/google'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'vendor-utils': ['axios', 'zustand', 'clsx', 'tailwind-merge', 'class-variance-authority'],
         },
