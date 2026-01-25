@@ -21,4 +21,34 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Use esbuild for minification (faster than terser, built-in)
+    minify: 'esbuild',
+    // Code splitting for optimal caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks - separate for better caching
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-ui': ['framer-motion', 'lucide-react'],
+          // Heavy libraries - load only when needed
+          'vendor-3d': ['@splinetool/react-spline', '@splinetool/runtime'],
+          'vendor-animation': ['gsap'],
+          'vendor-lottie': ['@lottiefiles/dotlottie-react'],
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'vendor-utils': ['axios', 'zustand', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+        },
+      },
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 500,
+    // Enable source maps for production debugging (optional)
+    sourcemap: false,
+    // CSS code splitting
+    cssCodeSplit: true,
+    // Target modern browsers for smaller bundle
+    target: 'es2020',
+  },
 });

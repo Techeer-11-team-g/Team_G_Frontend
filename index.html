@@ -5,10 +5,49 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>WHAT'S ON | Visual Intelligence Atelier</title>
+
+    <!-- Preconnect to external origins -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://storage.googleapis.com" />
+    <link rel="dns-prefetch" href="https://teamg-api.duckdns.org" />
+
+    <!-- Critical inline styles for initial render -->
+    <style>
+      /* Fallback font stack while web fonts load */
+      html { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+      body { margin: 0; background: #000; }
+      #root { min-height: 100vh; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Non-blocking font loading via JavaScript -->
+    <script>
+      // Load fonts asynchronously after page load
+      (function() {
+        function loadStylesheet(href) {
+          var link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = href;
+          document.head.appendChild(link);
+        }
+
+        // Use requestIdleCallback or setTimeout fallback
+        var loadFonts = function() {
+          loadStylesheet('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+          loadStylesheet('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+        };
+
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadFonts);
+        } else {
+          setTimeout(loadFonts, 1);
+        }
+      })();
+    </script>
   </body>
 </html>

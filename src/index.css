@@ -3,8 +3,10 @@
    Premium Dark Mode Experience
    ============================================= */
 
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+/* Fonts are loaded via index.html for optimal performance */
+/* - Pretendard: loaded with media="print" hack to prevent render blocking */
+/* - JetBrains Mono: loaded with display=swap for FOUT instead of FOIT */
+
 @import './styles/tokens.css';
 
 @tailwind base;
