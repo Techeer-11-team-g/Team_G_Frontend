@@ -37,19 +37,46 @@ export function useStyles() {
   });
 }
 
-/** 공개/비공개 토글 + 캐시 업데이트 */
+/** 공개/비공개 토글 - optimistic update */
 export function useVisibilityToggle() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ itemId, isPublic }: { itemId: number; isPublic: boolean }) =>
       feedApi.toggleVisibility(itemId, { is_public: isPublic }),
+    onMutate: async ({ itemId, isPublic }) => {
+      // 진행중인 쿼리 취소 (optimistic 데이터 덮어쓰기 방지)
+      await queryClient.cancelQueries({ queryKey: feedKeys.history() });
+
+      // 이전 데이터 스냅샷
+      const previous = queryClient.getQueryData<FeedResponse>(feedKeys.history());
+
+      // 캐시 즉시 업데이트
+      queryClient.setQueryData<FeedResponse>(feedKeys.history(), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: old.items.map((item) =>
+            item.id === itemId ? { ...item, is_public: isPublic } : item
+          ),
+        };
+      });
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      // 실패 시 롤백
+      if (context?.previous) {
+        queryClient.setQueryData(feedKeys.history(), context.previous);
+      }
+      toast.error('변경에 실패했습니다');
+    },
     onSuccess: (_, { isPublic }) => {
-      queryClient.invalidateQueries({ queryKey: feedKeys.all });
       toast.success(isPublic ? '공개로 변경되었습니다' : '비공개로 변경되었습니다');
     },
-    onError: () => {
-      toast.error('변경에 실패했습니다');
+    onSettled: () => {
+      // 서버 상태와 동기화
+      queryClient.invalidateQueries({ queryKey: feedKeys.all });
     },
   });
 }
