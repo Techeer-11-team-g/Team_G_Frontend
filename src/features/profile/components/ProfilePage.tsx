@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import {
@@ -136,6 +136,7 @@ function GlassCard({
 
 export function ProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { clearCart } = useCartStore();
   const { logout } = useAuthStore();
@@ -311,7 +312,10 @@ export function ProfilePage() {
         <div className="backdrop-blur-xl bg-black/50 border-b border-white/[0.06]">
           <div className="px-6 py-4 flex items-center justify-between">
             <MagneticButton
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                const from = (location.state as { from?: string } | null)?.from;
+                from ? navigate(from) : navigate(-1);
+              }}
               variant="ghost"
               className="flex items-center gap-2 px-3 py-2 -ml-3"
             >

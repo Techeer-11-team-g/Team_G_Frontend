@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useRef } from 'react';
 import {
   motion,
@@ -191,6 +191,7 @@ function CartItemCard({
 
 export function CartPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, totalPrice, totalQuantity, isLoading, removeFromCart, isRemoving } = useCart();
   const { user } = useAuthStore();
   const orderMutation = useOrderCreate();
@@ -279,7 +280,8 @@ export function CartPage() {
           <motion.button
             onClick={() => {
               haptic('tap');
-              navigate(-1);
+              const from = (location.state as { from?: string } | null)?.from;
+              from ? navigate(from) : navigate(-1);
             }}
             className={cn(
               'flex items-center gap-2 px-3 py-2 -ml-3 rounded-full',

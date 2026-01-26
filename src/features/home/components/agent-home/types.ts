@@ -1,3 +1,4 @@
+import type { NavigateFunction } from 'react-router-dom';
 import type { ProductCandidate, ChatProduct } from '@/types/api';
 import type { AgentState } from '@/components/agent';
 
@@ -7,7 +8,7 @@ export interface AgentHomePageProps {
 
 export interface AgentHeaderProps {
   cartItemsCount: number;
-  onNavigate: (path: string) => void;
+  onNavigate: NavigateFunction;
 }
 
 export interface AgentOrbSectionProps {
