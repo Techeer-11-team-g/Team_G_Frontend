@@ -14,6 +14,7 @@ export function useCart() {
   } = useQuery<CartResponse>({
     queryKey: ['cart'],
     queryFn: cartApi.get,
+    staleTime: 0, // 항상 fresh
   });
 
   // 장바구니 추가
