@@ -152,7 +152,6 @@ export function LoginPage() {
       }
 
       haptic('success');
-      toast.success('Welcome back');
       navigate('/home');
     } catch (error: any) {
       haptic('error');
