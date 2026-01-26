@@ -214,14 +214,33 @@ export function useChatProductActions(
   const [isChatPurchasing, setIsChatPurchasing] = useState(false);
   const [isChatFitting, setIsChatFitting] = useState(false);
 
+  const getSelectedProductId = useCallback(() => {
+    if (!selectedChatProduct?.sizes) return null;
+    const sizes = selectedChatProduct.sizes;
+    if (sizes.length === 0) return null;
+    // sizes가 ProductSize[] 인 경우
+    const first = sizes[0];
+    if (typeof first === 'string') return null;
+    if (!selectedChatSize) return first.selected_product_id;
+    const matched = (sizes as Array<{ size?: string; size_value?: string; selected_product_id: number }>)
+      .find((s) => s.size === selectedChatSize || s.size_value === selectedChatSize);
+    return matched?.selected_product_id ?? first.selected_product_id;
+  }, [selectedChatProduct, selectedChatSize]);
+
   const handleChatAddToCart = useCallback(async () => {
     if (!selectedChatProduct) return;
     if (chatProductSizes.length > 0 && !selectedChatSize) return;
 
+    const productId = getSelectedProductId();
+    if (!productId) {
+      toast.error('상품 정보를 찾을 수 없습니다');
+      return;
+    }
+
     setIsChatAddingToCart(true);
     try {
       await cartApi.add({
-        selected_product_id: selectedChatProduct.product_id,
+        selected_product_id: productId,
         quantity: 1,
       });
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -236,16 +255,22 @@ export function useChatProductActions(
     } finally {
       setIsChatAddingToCart(false);
     }
-  }, [selectedChatProduct, chatProductSizes.length, selectedChatSize, queryClient]);
+  }, [selectedChatProduct, chatProductSizes.length, selectedChatSize, queryClient, getSelectedProductId]);
 
   const handleChatPurchase = useCallback(async () => {
     if (!selectedChatProduct) return;
     if (chatProductSizes.length > 0 && !selectedChatSize) return;
 
+    const productId = getSelectedProductId();
+    if (!productId) {
+      toast.error('상품 정보를 찾을 수 없습니다');
+      return;
+    }
+
     setIsChatPurchasing(true);
     try {
       const cartItem = await cartApi.add({
-        selected_product_id: selectedChatProduct.product_id,
+        selected_product_id: productId,
         quantity: 1,
       });
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -265,7 +290,7 @@ export function useChatProductActions(
     } finally {
       setIsChatPurchasing(false);
     }
-  }, [selectedChatProduct, chatProductSizes.length, selectedChatSize, queryClient, user?.user_id]);
+  }, [selectedChatProduct, chatProductSizes.length, selectedChatSize, queryClient, user?.user_id, getSelectedProductId]);
 
   const handleChatFitting = useCallback(
     async (setChatSessionId: (id: string) => void) => {
