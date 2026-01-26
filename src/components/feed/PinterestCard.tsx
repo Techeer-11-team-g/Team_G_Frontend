@@ -21,8 +21,8 @@ export const PinterestCard = memo(function PinterestCard({
   isOwn,
   index = 0,
 }: PinterestCardProps) {
-  // First 4 images get priority loading for better LCP
-  const isPriority = index < 4;
+  // First 12 images get priority loading
+  const isPriority = index < 12;
   const [loaded, setLoaded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
