@@ -226,8 +226,12 @@ export function ProfilePage() {
     try {
       const result = await userImagesApi.upload(file);
       const secureUrl = ensureHttps(result.user_image_url) || result.user_image_url;
-      setUserImageUrl(secureUrl);
-      localStorage.setItem('user_full_body_photo', secureUrl);
+      // 브라우저 캐시 무효화 (같은 URL 경로에 새 이미지가 올라가므로)
+      const freshUrl = `${secureUrl}?v=${Date.now()}`;
+      setFullBodyPhoto(freshUrl);
+      setUserImageUrl(freshUrl);
+      localStorage.setItem('user_full_body_photo', freshUrl);
+      URL.revokeObjectURL(previewUrl);
       haptic('success');
       toast.success('전신 사진이 업로드되었습니다');
     } catch (error) {
