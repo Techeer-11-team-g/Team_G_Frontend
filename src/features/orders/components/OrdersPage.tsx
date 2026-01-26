@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Package, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { useOrders } from '../hooks/useOrders';
@@ -286,6 +286,7 @@ function LoadingState() {
 
 export function OrdersPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data, isLoading, error } = useOrders();
 
   const orders = data?.orders ?? [];
@@ -310,7 +311,8 @@ export function OrdersPage() {
           <motion.button
             onClick={() => {
               haptic('tap');
-              navigate(-1);
+              const from = (location.state as { from?: string } | null)?.from;
+              from ? navigate(from) : navigate(-1);
             }}
             className="flex items-center gap-2 text-white/60 hover:text-white/90 transition-colors"
             whileHover={{ x: -2 }}

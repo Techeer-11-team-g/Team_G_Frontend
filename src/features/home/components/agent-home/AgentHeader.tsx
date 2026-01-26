@@ -28,14 +28,14 @@ export const AgentHeader = memo(function AgentHeader({
           transition={{ duration: 0.8, delay: 0.3 }}
         >
           <button
-            onClick={() => onNavigate('/orders')}
+            onClick={() => onNavigate('/orders', { state: { from: '/home/agent' } })}
             className="text-white/60 transition-colors duration-300 hover:text-white"
             title="주문내역"
           >
             <Package size={18} strokeWidth={1.5} />
           </button>
           <button
-            onClick={() => onNavigate('/cart')}
+            onClick={() => onNavigate('/cart', { state: { from: '/home/agent' } })}
             className="relative text-white/60 transition-colors duration-300 hover:text-white"
             title="장바구니"
           >
@@ -52,7 +52,7 @@ export const AgentHeader = memo(function AgentHeader({
             )}
           </button>
           <button
-            onClick={() => onNavigate('/profile')}
+            onClick={() => onNavigate('/profile', { state: { from: '/home/agent' } })}
             className="text-white/60 transition-colors duration-300 hover:text-white"
             title="프로필"
           >
