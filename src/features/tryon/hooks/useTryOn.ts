@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { fittingApi } from '@/api';
+import { getAdaptiveInterval } from '@/utils/polling';
 import type {
   FittingRequest,
   FittingStartResponse,
@@ -8,9 +9,7 @@ import type {
   FittingResultResponse,
 } from '@/types/api';
 
-// 폴링 설정
-const POLLING_INTERVAL = 1500; // 1.5초
-const MAX_POLLING_TIME = 300000; // 5분
+const MAX_POLLING_TIME = 60000; // 60초
 
 /**
  * 가상 피팅 요청 mutation
@@ -41,13 +40,13 @@ export function useTryOnMutation() {
  * - 5분 타임아웃
  */
 export function useTryOnStatus(fittingImageId: number | null, enabled = true) {
-  const startTime = Date.now();
+  const startTimeRef = useRef<number>(Date.now());
 
   return useQuery<FittingStatusResponse>({
     queryKey: ['tryon', 'status', fittingImageId],
     queryFn: async () => {
       // 타임아웃 체크
-      if (Date.now() - startTime > MAX_POLLING_TIME) {
+      if (Date.now() - startTimeRef.current > MAX_POLLING_TIME) {
         throw new Error('피팅 처리 시간이 초과되었습니다');
       }
       return fittingApi.getStatus(fittingImageId!);
@@ -56,10 +55,10 @@ export function useTryOnStatus(fittingImageId: number | null, enabled = true) {
     refetchInterval: (query) => {
       const status = query.state.data?.fitting_image_status;
       if (status === 'DONE' || status === 'FAILED') return false;
-      return POLLING_INTERVAL;
+      return getAdaptiveInterval(Date.now() - startTimeRef.current);
     },
-    refetchIntervalInBackground: false, // 백그라운드에서는 폴링 중지
-    retry: 3, // 실패 시 3번 재시도
+    refetchIntervalInBackground: false,
+    retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 }

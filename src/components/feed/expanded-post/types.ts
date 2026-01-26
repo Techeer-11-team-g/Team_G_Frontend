@@ -1,8 +1,7 @@
 import type { FeedItem, UserProfile, ChatProduct, FeedDetectedObject, FeedProductSize } from '@/types/api';
 
 // Polling constants
-export const POLLING_INTERVAL = 3000;
-export const MAX_POLLING_ATTEMPTS = 20;
+export const MAX_POLLING_TIME = 60000; // 60초
 
 export interface ExpandedPostProps {
   item: FeedItem;

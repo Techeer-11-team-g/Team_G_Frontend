@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { chatApi } from '@/api';
+import { getAdaptiveInterval } from '@/utils/polling';
 import type {
   ChatResponse,
   ChatResponseType,
@@ -43,8 +44,7 @@ export type AgentState = 'idle' | 'thinking' | 'searching' | 'presenting' | 'err
 
 const SESSION_STORAGE_KEY = 'chat_session_id';
 const CHAT_STATE_KEY = 'chat_state';
-const POLLING_INTERVAL = 3000;
-const MAX_POLLING_ATTEMPTS = 20;
+const MAX_POLLING_TIME = 60000; // 60초
 
 // Helper to get saved chat state
 const getSavedChatState = (): { messages: ChatMessage[]; contentPanelData: ContentPanelData } | null => {
@@ -138,9 +138,11 @@ export function useChat() {
         return initialResponse;
       }
 
-      // Poll until complete
-      for (let i = 0; i < MAX_POLLING_ATTEMPTS; i++) {
-        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      // Adaptive polling until complete
+      const pollStart = Date.now();
+      while (Date.now() - pollStart < MAX_POLLING_TIME) {
+        const elapsed = Date.now() - pollStart;
+        await new Promise((resolve) => setTimeout(resolve, getAdaptiveInterval(elapsed)));
 
         try {
           const statusResponse = await chatApi.checkStatus({

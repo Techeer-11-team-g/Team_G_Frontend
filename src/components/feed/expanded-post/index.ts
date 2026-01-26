@@ -31,4 +31,4 @@ export type {
   ChatResultsProps,
 } from './types';
 
-export { POLLING_INTERVAL, MAX_POLLING_ATTEMPTS } from './types';
+export { MAX_POLLING_TIME } from './types';

@@ -8,10 +8,9 @@ import { cartApi, fittingApi } from '@/api';
 import { useUserStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ChatProduct, ProductSize } from '@/types/api';
+import { getAdaptiveInterval } from '@/utils/polling';
 
-// Polling constants for fitting
-const POLLING_INTERVAL = 3000;
-const MAX_POLLING_ATTEMPTS = 20;
+const MAX_POLLING_TIME = 60000; // 60초
 
 interface ProductBottomSheetProps {
   products: ChatProduct[];
@@ -135,9 +134,11 @@ export function ProductBottomSheet({
         return;
       }
 
-      // Poll for completion
-      for (let i = 0; i < MAX_POLLING_ATTEMPTS; i++) {
-        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      // Adaptive polling for completion
+      const pollStart = Date.now();
+      while (Date.now() - pollStart < MAX_POLLING_TIME) {
+        const elapsed = Date.now() - pollStart;
+        await new Promise((resolve) => setTimeout(resolve, getAdaptiveInterval(elapsed)));
 
         const statusResponse = await fittingApi.getStatus(fittingId);
 
