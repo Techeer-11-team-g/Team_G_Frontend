@@ -20,6 +20,7 @@ export function useOrders(status?: string) {
   return useQuery<OrderListResponse>({
     queryKey: orderKeys.list(status),
     queryFn: () => ordersApi.list(status),
+    staleTime: 1000 * 60 * 10, // 10분
   });
 }
 
@@ -29,6 +30,7 @@ export function useOrderDetail(orderId: number | null) {
     queryKey: orderKeys.detail(orderId!),
     queryFn: () => ordersApi.get(orderId!),
     enabled: !!orderId,
+    staleTime: 1000 * 60 * 10, // 10분
   });
 }
 

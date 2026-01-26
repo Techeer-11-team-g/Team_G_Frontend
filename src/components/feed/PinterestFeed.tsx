@@ -1,13 +1,11 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Globe } from 'lucide-react';
-import { feedApi } from '@/api';
 import { cn } from '@/utils/cn';
 import { haptic } from '@/motion';
-import { toast } from 'sonner';
 import { PinterestCard } from './PinterestCard';
 import { ExpandedPostView } from './ExpandedPostView';
-import type { FeedItem, StyleOption } from '@/types/api';
+import { useDiscoverFeed, useHistoryFeed, useStyles, useVisibilityToggle } from '@/hooks/useFeed';
 
 type FeedTab = 'discover' | 'history';
 
@@ -42,25 +40,19 @@ function distributeIntoColumns<T>(items: T[], columnCount: number): T[][] {
 
 export function PinterestFeed({ className }: PinterestFeedProps) {
   const [activeTab, setActiveTab] = useState<FeedTab>('discover');
-  const [items, setItems] = useState<FeedItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Start true for immediate skeleton display
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [columnCount, setColumnCount] = useState(2);
-  const [styles, setStyles] = useState<StyleOption[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
-  // Fetch styles on mount
-  useEffect(() => {
-    const fetchStyles = async () => {
-      try {
-        const response = await feedApi.getStyles();
-        setStyles(response.styles || []);
-      } catch (error) {
-        console.error('Failed to fetch styles:', error);
-      }
-    };
-    fetchStyles();
-  }, []);
+  // React Query hooks - 캐시 적용
+  const { data: discoverData, isLoading: isDiscoverLoading } = useDiscoverFeed(selectedStyle);
+  const { data: historyData, isLoading: isHistoryLoading } = useHistoryFeed();
+  const { data: stylesData } = useStyles();
+  const visibilityMutation = useVisibilityToggle();
+
+  const items = (activeTab === 'discover' ? discoverData?.items : historyData?.items) || [];
+  const isLoading = activeTab === 'discover' ? isDiscoverLoading : isHistoryLoading;
+  const styles = stylesData?.styles || [];
 
   // Update column count based on screen width
   useEffect(() => {
@@ -79,39 +71,9 @@ export function PinterestFeed({ className }: PinterestFeedProps) {
     return () => window.removeEventListener('resize', updateColumnCount);
   }, []);
 
-  // Fetch items
-  const fetchFeed = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response =
-        activeTab === 'discover'
-          ? await feedApi.getPublicFeed({ limit: 30, style: selectedStyle || undefined })
-          : await feedApi.getMyHistory({ limit: 30 });
-      setItems(response.items || []);
-    } catch (error) {
-      console.error('Failed to fetch feed:', error);
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeTab, selectedStyle]);
-
-  useEffect(() => {
-    fetchFeed();
-  }, [fetchFeed]);
-
   // Visibility toggle handler
   const handleVisibilityToggle = async (itemId: number, isPublic: boolean) => {
-    try {
-      await feedApi.toggleVisibility(itemId, { is_public: isPublic });
-      setItems((prev) =>
-        prev.map((item) => (item.id === itemId ? { ...item, is_public: isPublic } : item))
-      );
-      toast.success(isPublic ? '공개로 변경되었습니다' : '비공개로 변경되었습니다');
-    } catch (error) {
-      console.error('Failed to toggle visibility:', error);
-      toast.error('변경에 실패했습니다');
-    }
+    await visibilityMutation.mutateAsync({ itemId, isPublic });
   };
 
   // Memoize column distribution
