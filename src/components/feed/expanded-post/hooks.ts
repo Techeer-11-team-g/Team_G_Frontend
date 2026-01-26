@@ -4,7 +4,8 @@ import { haptic } from '@/motion';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import type { FeedItem, UserProfile, ChatProduct } from '@/types/api';
-import { POLLING_INTERVAL, MAX_POLLING_ATTEMPTS } from './types';
+import { MAX_POLLING_TIME } from './types';
+import { getAdaptiveInterval } from '@/utils/polling';
 
 // Helper to truncate agent message (first line only, before numbered list)
 export const truncateAgentMessage = (text: string): string => {
@@ -88,8 +89,10 @@ export function useChatPolling() {
         return initialResponse;
       }
 
-      for (let i = 0; i < MAX_POLLING_ATTEMPTS; i++) {
-        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      const pollStart = Date.now();
+      while (Date.now() - pollStart < MAX_POLLING_TIME) {
+        const elapsed = Date.now() - pollStart;
+        await new Promise((resolve) => setTimeout(resolve, getAdaptiveInterval(elapsed)));
 
         try {
           const statusResponse = await chatApi.checkStatus({
@@ -447,8 +450,10 @@ export function useProductActions(
         return;
       }
 
-      for (let i = 0; i < MAX_POLLING_ATTEMPTS; i++) {
-        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      const pollStart = Date.now();
+      while (Date.now() - pollStart < MAX_POLLING_TIME) {
+        const elapsed = Date.now() - pollStart;
+        await new Promise((resolve) => setTimeout(resolve, getAdaptiveInterval(elapsed)));
 
         const statusResponse = await fittingApi.getStatus(fittingId);
 

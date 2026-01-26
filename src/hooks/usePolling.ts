@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getAdaptiveInterval } from '@/utils/polling';
 
 type PollingStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED';
 
@@ -13,8 +14,6 @@ interface PollingOptions<T> {
   getStatus: (data: T) => PollingStatus;
   /** 응답에서 진행률 추출 (0-100) */
   getProgress?: (data: T) => number | undefined;
-  /** 폴링 간격 (ms) */
-  interval?: number;
   /** 최대 폴링 시간 (ms) */
   timeout?: number;
   /** 완료 콜백 */
@@ -41,8 +40,7 @@ export function usePolling<T, R = any>({
   fetchResult,
   getStatus,
   getProgress,
-  interval = 1000,
-  timeout = 300000, // 5분 기본 타임아웃
+  timeout = 60000, // 60초
   onComplete,
   onError,
 }: PollingOptions<T>): PollingState<R> {
@@ -125,6 +123,23 @@ export function usePolling<T, R = any>({
     }
   }, [fetchStatus, fetchResult, getStatus, getProgress, cleanup, onComplete, onError]);
 
+  const scheduleNextPoll = useCallback(() => {
+    if (!isMountedRef.current) return;
+    const elapsed = Date.now() - startTimeRef.current;
+    if (elapsed >= timeout) {
+      cleanup();
+      const error = new Error('처리 시간이 초과되었습니다');
+      setState((prev) => ({ ...prev, error, isPolling: false }));
+      onError?.(error);
+      return;
+    }
+    const nextInterval = getAdaptiveInterval(elapsed);
+    intervalRef.current = setTimeout(async () => {
+      await poll();
+      scheduleNextPoll();
+    }, nextInterval);
+  }, [poll, timeout, cleanup, onError]);
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -144,29 +159,17 @@ export function usePolling<T, R = any>({
     setState((prev) => ({ ...prev, isPolling: true, error: null }));
     startTimeRef.current = Date.now();
 
-    // 즉시 첫 폴링 실행
-    poll();
-
-    // 주기적 폴링 설정
-    intervalRef.current = setInterval(poll, interval);
-
-    // 타임아웃 설정
-    timeoutRef.current = setTimeout(() => {
-      cleanup();
-      const error = new Error('처리 시간이 초과되었습니다');
-      setState((prev) => ({
-        ...prev,
-        error,
-        isPolling: false,
-      }));
-      onError?.(error);
-    }, timeout);
+    // 즉시 첫 폴링 실행 후 adaptive 스케줄링
+    (async () => {
+      await poll();
+      scheduleNextPoll();
+    })();
 
     return () => {
       isMountedRef.current = false;
       cleanup();
     };
-  }, [enabled, poll, interval, timeout, cleanup, onError]);
+  }, [enabled, poll, timeout, cleanup, onError, scheduleNextPoll]);
 
   return state;
 }
