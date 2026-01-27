@@ -2,7 +2,9 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useChat, useVoiceInput } from '@/hooks';
+import { feedKeys } from '@/hooks/useFeed';
 import { feedApi } from '@/api';
 import { VirtualFittingRoom } from '@/features/tryon';
 import { useCart } from '@/features/cart/hooks/useCart';
@@ -37,6 +39,7 @@ import type { AgentHomePageProps } from './types';
 
 export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const orbRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -428,6 +431,7 @@ export function AgentHomePage({ hideHeader = false }: AgentHomePageProps) {
             showVisibilityPrompt={!!contentPanelData.uploadedImageId}
             onVisibilitySet={async (imageId, isPublic) => {
               await feedApi.toggleVisibility(imageId, { is_public: isPublic });
+              queryClient.invalidateQueries({ queryKey: feedKeys.all });
               toast.success(isPublic ? '피드에 공개되었습니다' : '비공개로 설정되었습니다');
             }}
             onProductSelect={() => {
