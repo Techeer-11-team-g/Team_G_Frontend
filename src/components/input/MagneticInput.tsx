@@ -316,7 +316,7 @@ export function MagneticInput({
           whileHover={value.trim() ? { scale: 1.1, background: 'rgba(255,255,255,0.2)' } : {}}
           whileTap={value.trim() ? { scale: 0.9 } : {}}
           animate={{
-            opacity: value.trim() ? 1 : 0.3,
+            opacity: value.trim() ? 1 : 0.5,
           }}
         >
           {/* Glass reflection */}
@@ -332,7 +332,7 @@ export function MagneticInput({
             size={16}
             className={cn(
               'relative z-10 transition-colors',
-              value.trim() ? 'text-white' : 'text-white/30'
+              value.trim() ? 'text-white' : 'text-white/60'
             )}
           />
         </motion.button>
