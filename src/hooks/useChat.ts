@@ -89,7 +89,9 @@ export function useChat() {
     savedState?.contentPanelData || { view: 'welcome' }
   );
   const [agentState, setAgentState] = useState<AgentState>(
-    savedState?.contentPanelData?.view === 'products' ? 'presenting' : 'idle'
+    savedState?.contentPanelData?.view && savedState.contentPanelData.view !== 'welcome'
+      ? 'presenting'
+      : 'idle'
   );
   const [error, setError] = useState<string | null>(null);
 
