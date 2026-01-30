@@ -140,7 +140,7 @@ export function OnboardingStep3() {
     } catch (error) {
       console.error('Onboarding failed:', error);
       haptic('error');
-      toast.error('Setup failed');
+      toast.error('설정에 실패했습니다');
       setIsLoading(false);
     }
   };
@@ -227,9 +227,9 @@ export function OnboardingStep3() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <h2 className="text-2xl font-extralight tracking-wide">All Set</h2>
+            <h2 className="text-2xl font-extralight tracking-wide">모든 준비 완료</h2>
             <p className="text-[13px] text-white/40 font-light tracking-wide">
-              Your AI stylist is ready
+              AI 스타일리스트가 준비되었습니다
             </p>
           </motion.div>
 
@@ -291,7 +291,7 @@ export function OnboardingStep3() {
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft size={15} strokeWidth={1.5} />
-            <span className="font-light">Back</span>
+            <span className="font-light">뒤로</span>
           </motion.button>
           <ProgressIndicator currentStep={3} totalSteps={3} />
         </div>
@@ -329,7 +329,7 @@ export function OnboardingStep3() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Step 3 of 3
+              3단계 중 3단계
             </motion.p>
             <h1 className="text-[clamp(2rem,6vw,2.8rem)] font-extralight leading-[1.1] tracking-[-0.02em]">
               <motion.span
@@ -338,7 +338,7 @@ export function OnboardingStep3() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: easings.smooth }}
               >
-                Payment
+                결제
               </motion.span>
               <motion.span
                 className="block text-white/60"
@@ -346,7 +346,7 @@ export function OnboardingStep3() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.6, ease: easings.smooth }}
               >
-                Method
+                수단
               </motion.span>
             </h1>
           </motion.div>
@@ -396,13 +396,13 @@ export function OnboardingStep3() {
               {/* Bottom row */}
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-[9px] tracking-[0.15em] uppercase text-white/30 mb-1">Card Holder</p>
+                  <p className="text-[9px] tracking-[0.15em] uppercase text-white/30 mb-1">카드 소유자</p>
                   <p className="text-[13px] uppercase tracking-[0.1em] text-white/60 font-light">
-                    {cardHolder || 'YOUR NAME'}
+                    {cardHolder || '이름'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] tracking-[0.15em] uppercase text-white/30 mb-1">Expires</p>
+                  <p className="text-[9px] tracking-[0.15em] uppercase text-white/30 mb-1">유효기간</p>
                   <p className="text-[13px] tracking-[0.1em] text-white/60 font-light font-mono">
                     {expiryDate || 'MM/YY'}
                   </p>
@@ -428,7 +428,7 @@ export function OnboardingStep3() {
               transition={{ delay: 0.65 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                Card Number
+                카드 번호
               </label>
               <GlassInput
                 type="text"
@@ -451,7 +451,7 @@ export function OnboardingStep3() {
               transition={{ delay: 0.7 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                Card Holder
+                카드 소유자
               </label>
               <GlassInput
                 type="text"
@@ -460,7 +460,7 @@ export function OnboardingStep3() {
                 onFocus={() => setFocusedField('cardHolder')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'cardHolder'}
-                placeholder="YOUR NAME"
+                placeholder="이름을 입력하세요"
                 className="uppercase tracking-[0.1em]"
               />
             </motion.div>
@@ -474,7 +474,7 @@ export function OnboardingStep3() {
             >
               <div className="space-y-2">
                 <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                  Expiry
+                  유효기간
                 </label>
                 <GlassInput
                   type="text"
@@ -515,7 +515,7 @@ export function OnboardingStep3() {
             >
               <Shield size={12} className="text-white/30" />
               <span className="text-[10px] tracking-wider text-white/30 font-light">
-                Secured with end-to-end encryption
+                종단 간 암호화로 보호됩니다
               </span>
             </motion.div>
 
@@ -550,7 +550,7 @@ export function OnboardingStep3() {
                   />
                 ) : (
                   <>
-                    <span>Complete Setup</span>
+                    <span>설정 완료</span>
                     <motion.div
                       initial={{ x: 0, y: 0 }}
                       whileHover={{ x: 2, y: -2 }}
@@ -576,7 +576,7 @@ export function OnboardingStep3() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Add later
+            나중에 추가
           </motion.button>
         </motion.div>
       </main>

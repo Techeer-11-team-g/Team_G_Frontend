@@ -142,10 +142,10 @@ export function SignUpPage() {
     if (/[0-9]/.test(password)) strength++;
     if (/[^A-Za-z0-9]/.test(password)) strength++;
 
-    if (strength <= 1) return { level: 1, label: 'Weak' };
-    if (strength <= 2) return { level: 2, label: 'Fair' };
-    if (strength <= 3) return { level: 3, label: 'Good' };
-    return { level: 4, label: 'Strong' };
+    if (strength <= 1) return { level: 1, label: '약함' };
+    if (strength <= 2) return { level: 2, label: '보통' };
+    if (strength <= 3) return { level: 3, label: '좋음' };
+    return { level: 4, label: '강함' };
   };
 
   const passwordStrength = getPasswordStrength();
@@ -183,7 +183,7 @@ export function SignUpPage() {
     } catch (error: unknown) {
       haptic('error');
       const axiosError = error as { response?: { data?: { detail?: string } } };
-      const message = axiosError.response?.data?.detail || 'Registration failed';
+      const message = axiosError.response?.data?.detail || '회원가입에 실패했습니다';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -246,9 +246,9 @@ export function SignUpPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <h2 className="text-2xl font-extralight tracking-wide">Welcome</h2>
+            <h2 className="text-2xl font-extralight tracking-wide">환영합니다</h2>
             <p className="text-[13px] text-white/40 font-light tracking-wide">
-              Let us personalize your experience
+              맞춤 경험을 준비하고 있습니다
             </p>
           </motion.div>
 
@@ -305,7 +305,7 @@ export function SignUpPage() {
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft size={15} strokeWidth={1.5} />
-            <span className="font-light">Back</span>
+            <span className="font-light">뒤로</span>
           </motion.button>
           <span className="text-[11px] tracking-[0.15em] uppercase text-white/30 font-light">
             Dressense
@@ -333,7 +333,7 @@ export function SignUpPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              New fashion experience
+              새로운 패션 경험
             </motion.p>
             <h1 className="text-[clamp(2.2rem,7vw,3.2rem)] font-extralight leading-[1.05] tracking-[-0.02em]">
               <motion.span
@@ -342,7 +342,7 @@ export function SignUpPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: easings.smooth }}
               >
-                Create your
+                계정을
               </motion.span>
               <motion.span
                 className="block text-white/60"
@@ -350,7 +350,7 @@ export function SignUpPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.6, ease: easings.smooth }}
               >
-                account
+                만들어보세요
               </motion.span>
             </h1>
           </motion.div>
@@ -372,10 +372,10 @@ export function SignUpPage() {
             >
               <div className="flex items-center justify-between ml-1 mr-1">
                 <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
-                  Username
+                  사용자 이름
                 </label>
                 {username && (
-                  <ValidationBadge isValid={isUsernameValid} validText="Valid" invalidText="3+ chars" />
+                  <ValidationBadge isValid={isUsernameValid} validText="유효" invalidText="3자 이상" />
                 )}
               </div>
               <MagneticInput
@@ -385,7 +385,7 @@ export function SignUpPage() {
                 onFocus={() => setFocusedField('username')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'username'}
-                placeholder="Choose a username"
+                placeholder="사용자 이름을 선택하세요"
               />
             </motion.div>
 
@@ -398,10 +398,10 @@ export function SignUpPage() {
             >
               <div className="flex items-center justify-between ml-1 mr-1">
                 <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
-                  Email
+                  이메일
                 </label>
                 {email && (
-                  <ValidationBadge isValid={isEmailValid} validText="Valid" invalidText="Invalid" />
+                  <ValidationBadge isValid={isEmailValid} validText="유효" invalidText="유효하지 않음" />
                 )}
               </div>
               <MagneticInput
@@ -411,7 +411,7 @@ export function SignUpPage() {
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'email'}
-                placeholder="Enter your email"
+                placeholder="이메일을 입력하세요"
               />
             </motion.div>
 
@@ -424,7 +424,7 @@ export function SignUpPage() {
             >
               <div className="flex items-center justify-between ml-1 mr-1">
                 <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
-                  Password
+                  비밀번호
                 </label>
                 {password && (
                   <motion.span
@@ -446,7 +446,7 @@ export function SignUpPage() {
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'password'}
-                placeholder="Create a password"
+                placeholder="비밀번호를 입력하세요"
                 className="pr-16"
               >
                 <button
@@ -457,7 +457,7 @@ export function SignUpPage() {
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] tracking-wider uppercase text-white/40 hover:text-white/70 transition-colors"
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? '숨기기' : '보기'}
                 </button>
               </MagneticInput>
               {/* Password strength bar */}
@@ -504,7 +504,7 @@ export function SignUpPage() {
             >
               <div className="flex items-center justify-between ml-1 mr-1">
                 <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light">
-                  Confirm Password
+                  비밀번호 확인
                 </label>
                 {passwordConfirm && (
                   <motion.span
@@ -515,7 +515,7 @@ export function SignUpPage() {
                       isPasswordMatch ? 'text-emerald-400/80' : 'text-red-400/80'
                     )}
                   >
-                    {isPasswordMatch ? 'Match' : 'Mismatch'}
+                    {isPasswordMatch ? '일치' : '불일치'}
                   </motion.span>
                 )}
               </div>
@@ -526,7 +526,7 @@ export function SignUpPage() {
                 onFocus={() => setFocusedField('passwordConfirm')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'passwordConfirm'}
-                placeholder="Confirm your password"
+                placeholder="비밀번호를 다시 입력하세요"
               />
             </motion.div>
 
@@ -561,7 +561,7 @@ export function SignUpPage() {
                   />
                 ) : (
                   <>
-                    <span>Get Started</span>
+                    <span>시작하기</span>
                     <motion.div
                       initial={{ x: 0, y: 0 }}
                       whileHover={{ x: 2, y: -2 }}
@@ -584,7 +584,7 @@ export function SignUpPage() {
           >
             <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
             <p className="text-[13px] text-white/40 font-light tracking-wide text-center">
-              Already have an account?{' '}
+              이미 계정이 있으신가요?{' '}
               <motion.button
                 onClick={() => {
                   haptic('tap');
@@ -594,7 +594,7 @@ export function SignUpPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Sign in
+                로그인
               </motion.button>
             </p>
           </motion.div>

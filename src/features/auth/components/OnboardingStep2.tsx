@@ -84,14 +84,14 @@ export function OnboardingStep2() {
       if (croppedFile) {
         const result = await userImagesApi.upload(croppedFile);
         setUserImageUrl(result.user_image_url);
-        toast.success('Photo uploaded successfully');
+        toast.success('사진이 업로드되었습니다');
       }
       haptic('success');
       navigate('/onboarding/step3');
     } catch (error) {
       console.error('Image upload failed:', error);
       haptic('error');
-      toast.error('Upload failed');
+      toast.error('업로드에 실패했습니다');
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +135,7 @@ export function OnboardingStep2() {
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft size={15} strokeWidth={1.5} />
-            <span className="font-light">Back</span>
+            <span className="font-light">뒤로</span>
           </motion.button>
           <ProgressIndicator currentStep={2} totalSteps={3} />
         </div>
@@ -173,7 +173,7 @@ export function OnboardingStep2() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Step 2 of 3
+              3단계 중 2단계
             </motion.p>
             <h1 className="text-[clamp(2rem,6vw,2.8rem)] font-extralight leading-[1.1] tracking-[-0.02em]">
               <motion.span
@@ -182,7 +182,7 @@ export function OnboardingStep2() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: easings.smooth }}
               >
-                Full Body
+                전신
               </motion.span>
               <motion.span
                 className="block text-white/60"
@@ -190,7 +190,7 @@ export function OnboardingStep2() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.6, ease: easings.smooth }}
               >
-                Photo
+                사진
               </motion.span>
             </h1>
             <motion.p
@@ -199,7 +199,7 @@ export function OnboardingStep2() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
             >
-              Upload for virtual try-on experience
+              가상 피팅을 위한 사진을 업로드하세요
             </motion.p>
           </motion.div>
 
@@ -270,7 +270,7 @@ export function OnboardingStep2() {
                   >
                     <Sparkles size={10} className="text-white/70" />
                     <span className="text-[9px] tracking-wider uppercase text-white/70 font-light">
-                      Try-on Ready
+                      피팅 준비 완료
                     </span>
                   </motion.div>
                 </motion.div>
@@ -316,10 +316,10 @@ export function OnboardingStep2() {
                     {/* Text */}
                     <div className="text-center px-4">
                       <p className="text-[12px] text-white/50 font-light tracking-wide">
-                        Full body photo
+                        전신 사진
                       </p>
                       <p className="text-[10px] text-white/30 mt-1.5 font-light">
-                        Tap or drag to upload
+                        탭하거나 드래그하여 업로드
                       </p>
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export function OnboardingStep2() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
-              Front-facing full body photo recommended for best results
+              최적의 결과를 위해 정면 전신 사진을 권장합니다
             </motion.p>
           </motion.div>
 
@@ -375,7 +375,7 @@ export function OnboardingStep2() {
                 />
               ) : (
                 <>
-                  <span>Continue</span>
+                  <span>계속하기</span>
                   <motion.div
                     initial={{ x: 0, y: 0 }}
                     whileHover={{ x: 2, y: -2 }}
@@ -402,7 +402,7 @@ export function OnboardingStep2() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Skip for now
+            건너뛰기
           </motion.button>
         </motion.div>
       </main>
