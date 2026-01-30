@@ -111,7 +111,7 @@ export const FeedCard = memo(function FeedCard({
           // First few images get priority loading for LCP optimization
           loading={index < 4 ? 'eager' : 'lazy'}
           decoding={index < 4 ? 'sync' : 'async'}
-          fetchPriority={index === 0 ? 'high' : undefined}
+          fetchPriority={index === 0 ? 'high' : index < 4 ? undefined : 'low'}
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{
             opacity: loaded ? 1 : 0,

@@ -14,6 +14,13 @@
     <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
     <link rel="dns-prefetch" href="https://teamg-api.duckdns.org" />
 
+    <!-- Preload critical font to break network chain (CSS → font download) -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2-subset/Pretendard-Regular.subset.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Non-blocking font stylesheets -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-subset.min.css" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+
     <!-- Critical inline styles for initial render -->
     <style>
       /* Fallback font stack while web fonts load */
@@ -129,30 +136,10 @@
     </div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Non-blocking font loading via JavaScript -->
-    <script>
-      // Load fonts asynchronously after page load
-      (function() {
-        function loadStylesheet(href) {
-          var link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = href;
-          document.head.appendChild(link);
-        }
-
-        // Use requestIdleCallback or setTimeout fallback
-        var loadFonts = function() {
-          // Use subset version - Korean + Latin only (~90KB vs ~3MB full)
-          loadStylesheet('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-subset.min.css');
-          loadStylesheet('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
-        };
-
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(loadFonts);
-        } else {
-          setTimeout(loadFonts, 1);
-        }
-      })();
-    </script>
+    <!-- Fallback for browsers that don't support media="print" onload hack -->
+    <noscript>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-subset.min.css" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
+    </noscript>
   </body>
 </html>

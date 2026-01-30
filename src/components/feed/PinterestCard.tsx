@@ -21,8 +21,8 @@ export const PinterestCard = memo(function PinterestCard({
   isOwn,
   index = 0,
 }: PinterestCardProps) {
-  // First 12 images get priority loading
-  const isPriority = index < 12;
+  // Only first 4 images (above-the-fold) get priority loading to reduce LCP bandwidth competition
+  const isPriority = index < 4;
   const [loaded, setLoaded] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
@@ -69,7 +69,7 @@ export const PinterestCard = memo(function PinterestCard({
           draggable={false}
           loading={isPriority ? 'eager' : 'lazy'}
           decoding={isPriority ? 'sync' : 'async'}
-          fetchPriority={index === 0 ? 'high' : undefined}
+          fetchPriority={index === 0 ? 'high' : isPriority ? undefined : 'low'}
         />
 
         {/* Hover overlay */}
