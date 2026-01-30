@@ -197,7 +197,7 @@ export function OnboardingStep1() {
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft size={15} strokeWidth={1.5} />
-            <span className="font-light">Back</span>
+            <span className="font-light">뒤로</span>
           </motion.button>
           <ProgressIndicator currentStep={1} totalSteps={3} />
         </div>
@@ -235,7 +235,7 @@ export function OnboardingStep1() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Step 1 of 3
+              3단계 중 1단계
             </motion.p>
             <h1 className="text-[clamp(2rem,6vw,2.8rem)] font-extralight leading-[1.1] tracking-[-0.02em]">
               <motion.span
@@ -244,7 +244,7 @@ export function OnboardingStep1() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: easings.smooth }}
               >
-                Basic
+                기본
               </motion.span>
               <motion.span
                 className="block text-white/60"
@@ -252,7 +252,7 @@ export function OnboardingStep1() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.6, ease: easings.smooth }}
               >
-                Information
+                정보
               </motion.span>
             </h1>
           </motion.div>
@@ -273,7 +273,7 @@ export function OnboardingStep1() {
               transition={{ delay: 0.55 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1 flex items-center gap-1">
-                Name <span className="text-white/60">*</span>
+                이름 <span className="text-white/60">*</span>
               </label>
               <MagneticInput
                 type="text"
@@ -282,7 +282,7 @@ export function OnboardingStep1() {
                 onFocus={() => setFocusedField('name')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'name'}
-                placeholder="Enter your name"
+                placeholder="이름을 입력하세요"
                 icon={User}
               />
             </motion.div>
@@ -295,7 +295,7 @@ export function OnboardingStep1() {
               transition={{ delay: 0.6 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                Address
+                주소
               </label>
               <motion.button
                 type="button"
@@ -317,7 +317,7 @@ export function OnboardingStep1() {
                   'text-[15px] font-light tracking-wide',
                   address ? 'text-white' : 'text-white/30'
                 )}>
-                  {address || 'Search address'}
+                  {address || '주소 검색'}
                 </span>
               </motion.button>
               {address && (
@@ -333,7 +333,7 @@ export function OnboardingStep1() {
                     onFocus={() => setFocusedField('addressDetail')}
                     onBlur={() => setFocusedField(null)}
                     isFocused={focusedField === 'addressDetail'}
-                    placeholder="Detail address"
+                    placeholder="상세 주소"
                   />
                 </motion.div>
               )}
@@ -347,7 +347,7 @@ export function OnboardingStep1() {
               transition={{ delay: 0.65 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                Phone
+                전화번호
               </label>
               <MagneticInput
                 type="tel"
@@ -356,7 +356,7 @@ export function OnboardingStep1() {
                 onFocus={() => setFocusedField('phone')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'phone'}
-                placeholder="Phone number"
+                placeholder="전화번호를 입력하세요"
                 icon={Phone}
               />
             </motion.div>
@@ -392,7 +392,7 @@ export function OnboardingStep1() {
                   />
                 ) : (
                   <>
-                    <span>Continue</span>
+                    <span>계속하기</span>
                     <motion.div
                       initial={{ x: 0, y: 0 }}
                       whileHover={{ x: 2, y: -2 }}
@@ -420,7 +420,7 @@ export function OnboardingStep1() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Skip for now
+            건너뛰기
           </motion.button>
         </motion.div>
       </main>

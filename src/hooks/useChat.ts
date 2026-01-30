@@ -379,6 +379,7 @@ export function useChat() {
     setError(null);
     localStorage.removeItem(SESSION_STORAGE_KEY);
     sessionStorage.removeItem(CHAT_STATE_KEY);
+    sessionStorage.removeItem('dressense_current_view');
   }, [sessionId]);
 
   // Reset to idle (without clearing session)
@@ -388,6 +389,7 @@ export function useChat() {
     setAgentState('idle');
     setError(null);
     sessionStorage.removeItem(CHAT_STATE_KEY);
+    sessionStorage.removeItem('dressense_current_view');
   }, []);
 
   return {

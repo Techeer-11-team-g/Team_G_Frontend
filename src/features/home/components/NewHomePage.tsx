@@ -24,6 +24,7 @@ const CONFIG = {
 // Main Component
 // =============================================
 const VISITED_KEY = 'dressense_home_visited';
+const VIEW_KEY = 'dressense_current_view';
 
 export function NewHomePage() {
   const navigate = useNavigate();
@@ -37,7 +38,16 @@ export function NewHomePage() {
 
   // Animation states
   const [showFeed, setShowFeed] = useState(!isFirstVisit);
-  const [currentView, setCurrentView] = useState<'feed' | 'agent'>('feed');
+  const [currentView, setCurrentView] = useState<'feed' | 'agent'>(() => {
+    const savedView = sessionStorage.getItem(VIEW_KEY);
+    if (savedView === 'agent') return 'agent';
+    return 'feed';
+  });
+
+  // Persist current view to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(VIEW_KEY, currentView);
+  }, [currentView]);
 
   // Animation sequence - only on first visit (reduced delay for better LCP)
   useEffect(() => {

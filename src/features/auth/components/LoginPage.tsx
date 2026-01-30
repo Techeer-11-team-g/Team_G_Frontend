@@ -155,7 +155,7 @@ export function LoginPage() {
       navigate('/home');
     } catch (error: any) {
       haptic('error');
-      const message = error.response?.data?.detail || 'Login failed';
+      const message = error.response?.data?.detail || '로그인에 실패했습니다';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -249,7 +249,7 @@ export function LoginPage() {
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft size={15} strokeWidth={1.5} />
-            <span className="font-light">Back</span>
+            <span className="font-light">뒤로</span>
           </motion.button>
           <span className="text-[11px] tracking-[0.15em] uppercase text-white/30 font-light">
             Dressense
@@ -277,7 +277,7 @@ export function LoginPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Welcome back
+              다시 오신 것을
             </motion.p>
             <h1 className="text-[clamp(2.2rem,7vw,3.2rem)] font-extralight leading-[1.05] tracking-[-0.02em]">
               <motion.span
@@ -286,7 +286,7 @@ export function LoginPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: easings.smooth }}
               >
-                Sign in to
+                환영합니다
               </motion.span>
               <motion.span
                 className="block text-white/60"
@@ -294,7 +294,7 @@ export function LoginPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.6, ease: easings.smooth }}
               >
-                continue
+                로그인하세요
               </motion.span>
             </h1>
           </motion.div>
@@ -315,7 +315,7 @@ export function LoginPage() {
               transition={{ delay: 0.6 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                Username
+                사용자 이름
               </label>
               <MagneticInput
                 type="text"
@@ -324,7 +324,7 @@ export function LoginPage() {
                 onFocus={() => setFocusedField('username')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'username'}
-                placeholder="Enter your username"
+                placeholder="사용자 이름을 입력하세요"
               />
             </motion.div>
 
@@ -336,7 +336,7 @@ export function LoginPage() {
               transition={{ delay: 0.7 }}
             >
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-light ml-1">
-                Password
+                비밀번호
               </label>
               <MagneticInput
                 type={showPassword ? 'text' : 'password'}
@@ -345,7 +345,7 @@ export function LoginPage() {
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 isFocused={focusedField === 'password'}
-                placeholder="Enter your password"
+                placeholder="비밀번호를 입력하세요"
                 className="pr-16"
               >
                 <button
@@ -356,7 +356,7 @@ export function LoginPage() {
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] tracking-wider uppercase text-white/40 hover:text-white/70 transition-colors"
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? '숨기기' : '보기'}
                 </button>
               </MagneticInput>
             </motion.div>
@@ -392,7 +392,7 @@ export function LoginPage() {
                   />
                 ) : (
                   <>
-                    <span>Sign In</span>
+                    <span>로그인</span>
                     <motion.div
                       initial={{ x: 0, y: 0 }}
                       whileHover={{ x: 2, y: -2 }}
@@ -413,7 +413,7 @@ export function LoginPage() {
               transition={{ delay: 0.9 }}
             >
               <div className="flex-1 h-px bg-gradient-to-r from-transparent to-white/10" />
-              <span className="text-[11px] tracking-[0.15em] uppercase text-white/30 font-light">or</span>
+              <span className="text-[11px] tracking-[0.15em] uppercase text-white/30 font-light">또는</span>
               <div className="flex-1 h-px bg-gradient-to-l from-transparent to-white/10" />
             </motion.div>
 
@@ -450,7 +450,7 @@ export function LoginPage() {
           >
             <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
             <p className="text-[13px] text-white/40 font-light tracking-wide text-center">
-              New to Dressense?{' '}
+              Dressense가 처음이신가요?{' '}
               <motion.button
                 onClick={() => {
                   haptic('tap');
@@ -460,7 +460,7 @@ export function LoginPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Create account
+                회원가입
               </motion.button>
             </p>
           </motion.div>
@@ -476,7 +476,7 @@ export function LoginPage() {
       >
         <div className="flex items-center justify-between text-[10px] tracking-[0.15em] text-white/20 font-light">
           <span>2025</span>
-          <span className="uppercase">AI Fashion Agent</span>
+          <span className="uppercase">AI 패션 에이전트</span>
         </div>
       </motion.footer>
     </motion.div>
