@@ -49,9 +49,9 @@
   /* ─────────────────────────────────────────────
      Typography
      ───────────────────────────────────────────── */
-  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  --font-display: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   /* Font sizes - Mobile optimized */
   --text-2xs: 10px;

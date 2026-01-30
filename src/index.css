@@ -4,8 +4,8 @@
    ============================================= */
 
 /* Fonts are loaded via index.html for optimal performance */
-/* - Pretendard: loaded with media="print" hack to prevent render blocking */
 /* - JetBrains Mono: loaded with display=swap for FOUT instead of FOIT */
+/* - Sans-serif: system font stack (Pretendard 제거 - LCP 개선) */
 
 @import './styles/tokens.css';
 
@@ -24,7 +24,7 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeSpeed;
+    text-rendering: optimizeLegibility;
   }
 
   body {
